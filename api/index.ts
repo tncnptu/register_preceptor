@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
@@ -40,6 +41,15 @@ app.post('/api/login', (req, res) => {
     res.json({ success: true, token });
   } else {
     res.status(401).json({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+  }
+});
+
+app.post('/api/verify-code', (req, res) => {
+  const { code } = req.body;
+  if (code === process.env.ALUMNI_SECRET_CODE) {
+    res.json({ success: true });
+  } else {
+    res.status(400).json({ success: false, message: 'รหัสผู้แนะนำไม่ถูกต้อง' });
   }
 });
 

@@ -22,6 +22,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 
 // server.ts
+var import_config = require("dotenv/config");
 var import_express = __toESM(require("express"), 1);
 var import_path = __toESM(require("path"), 1);
 var import_fs = __toESM(require("fs"), 1);
@@ -68,6 +69,14 @@ async function startServer() {
       res.json({ success: true, token });
     } else {
       res.status(401).json({ success: false, message: "\u0E0A\u0E37\u0E48\u0E2D\u0E1C\u0E39\u0E49\u0E43\u0E0A\u0E49\u0E2B\u0E23\u0E37\u0E2D\u0E23\u0E2B\u0E31\u0E2A\u0E1C\u0E48\u0E32\u0E19\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07" });
+    }
+  });
+  app.post("/api/verify-code", (req, res) => {
+    const { code } = req.body;
+    if (code === process.env.ALUMNI_SECRET_CODE) {
+      res.json({ success: true });
+    } else {
+      res.status(400).json({ success: false, message: "\u0E23\u0E2B\u0E31\u0E2A\u0E1C\u0E39\u0E49\u0E41\u0E19\u0E30\u0E19\u0E33\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07" });
     }
   });
   app.post("/api/register", async (req, res) => {

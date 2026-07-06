@@ -6,7 +6,8 @@ import {
   Phone, Mail, MapPin, GraduationCap, Heart, Calendar, Clock, Award
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-type Tab = 'form' | 'dashboard';
+import Schedule from './Schedule';
+type Tab = 'form' | 'dashboard' | 'schedule';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('form');
@@ -27,6 +28,7 @@ export default function App() {
 
             <div className="flex space-x-1 sm:space-x-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
               <NavButton active={activeTab === 'form'} onClick={() => setActiveTab('form')} icon={<FileText className="w-4 h-4 mr-1.5" />} label="ลงทะเบียน" />
+              <NavButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar className="w-4 h-4 mr-1.5" />} label="กำหนดการ" />
               <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-4 h-4 mr-1.5" />} label="แดชบอร์ด" />
             </div>
           </div>
@@ -43,6 +45,11 @@ export default function App() {
           {activeTab === 'dashboard' && (
             <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
               <Dashboard />
+            </motion.div>
+          )}
+          {activeTab === 'schedule' && (
+            <motion.div key="schedule" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+              <Schedule />
             </motion.div>
           )}
         </AnimatePresence>
@@ -110,6 +117,7 @@ function RegistrationFlow() {
   const [secretCodeInput, setSecretCodeInput] = useState('');
   const [teacherInput, setTeacherInput] = useState('');
   const [secretError, setSecretError] = useState(false);
+  const [checkingCode, setCheckingCode] = useState(false);
 
   // Edit Login State
   const [editEmail, setEditEmail] = useState('');
@@ -125,12 +133,30 @@ function RegistrationFlow() {
     }
   };
 
-  const handleSecretCheck = (e: React.FormEvent) => {
+  const handleSecretCheck = async (e: React.FormEvent) => {
     e.preventDefault();
     if (secretCodeInput.trim() !== '' && teacherInput.trim() !== '') {
-      setSecretError(false);
-      setFormData({ ...formData, secretCode: secretCodeInput, referringTeacher: teacherInput });
-      setStep('form_alumni');
+      setCheckingCode(true);
+      try {
+        const res = await fetch('/api/verify-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: secretCodeInput.trim() })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          setSecretError(false);
+          setFormData({ ...formData, secretCode: secretCodeInput.trim(), referringTeacher: teacherInput.trim() });
+          setStep('form_alumni');
+        } else {
+          setSecretError(true);
+        }
+      } catch (err) {
+        setSecretError(true);
+      } finally {
+        setCheckingCode(false);
+      }
     } else {
       setSecretError(true);
     }
@@ -447,8 +473,8 @@ function RegistrationFlow() {
                 <button type="button" onClick={() => setStep('select_type')} className="w-1/3 flex items-center justify-center py-3 px-4 border border-slate-200 rounded-xl shadow-sm text-base font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors">
                   <ArrowLeft className="mr-2 w-5 h-5" /> กลับ
                 </button>
-                <button type="submit" className="w-2/3 flex items-center justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-base font-medium text-white btn-primary-gradient">
-                  ตรวจสอบ <ArrowRight className="ml-2 w-5 h-5" />
+                <button type="submit" disabled={checkingCode} className="w-2/3 flex items-center justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-base font-medium text-white btn-primary-gradient disabled:opacity-50">
+                  {checkingCode ? <RefreshCw className="w-5 h-5 animate-spin" /> : <><span className="mr-2">ตรวจสอบ</span> <ArrowRight className="w-5 h-5" /></>}
                 </button>
               </div>
             </motion.form>
