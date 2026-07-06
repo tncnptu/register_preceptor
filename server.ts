@@ -1,35 +1,13 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 
-// Configuration — move sensitive values to environment variables in production
-const GAS_URL = process.env.GAS_URL || 'https://script.google.com/macros/s/AKfycbyJ6Mp449Y2jYBEYKdwRgCb7GvlKHo-TpzapeVpq-XvYyzm7FoY1EU_3bFt0bId7_Id/exec';
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin_nptu';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin@nptu2569*';
-const SECRET_CODE = process.env.SECRET_CODE || 'NPTU-MENTOR26';
+// The URL provided by the user for their Google Apps Script Web App
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyJ6Mp449Y2jYBEYKdwRgCb7GvlKHo-TpzapeVpq-XvYyzm7FoY1EU_3bFt0bId7_Id/exec';
 
-// Helper: proxy requests to Google Apps Script
-async function proxyToGAS(payload: object): Promise<{ status: number; body: any }> {
-  try {
-    const response = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const text = await response.text();
-    try {
-      const result = JSON.parse(text);
-      return { status: 200, body: result };
-    } catch (e) {
-      console.error('GAS Error Response:', text);
-      return { status: 500, body: { success: false, message: 'การเชื่อมต่อกับ Google Apps Script ผิดพลาด กรุณาตรวจสอบการ Deploy Code.gs' } };
-    }
-  } catch (error) {
-    console.error(error);
-    return { status: 500, body: { success: false, message: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์' } };
-  }
-}
+// Hero banner image path
+const HERO_BANNER_PATH = path.resolve('C:/Users/oil_p/.gemini/antigravity-ide/brain/c36c2d90-e88c-4501-9e17-aad8e7135f98/media__1783327342583.png');
 
 async function startServer() {
   const app = express();
@@ -37,49 +15,117 @@ async function startServer() {
 
   app.use(express.json({ limit: '50mb' }));
 
-  // ===== Security: Server-side secret code verification =====
-  app.post('/api/verify-secret', (req, res) => {
-    const { secretCode } = req.body;
-    if (secretCode === SECRET_CODE) {
-      res.json({ success: true });
+  // Serve hero banner image
+  app.get('/hero-banner.png', (req, res) => {
+    if (fs.existsSync(HERO_BANNER_PATH)) {
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      fs.createReadStream(HERO_BANNER_PATH).pipe(res);
     } else {
-      res.json({ success: false, message: 'รหัสผู้แนะนำไม่ถูกต้อง' });
+      res.status(404).send('Not found');
     }
   });
 
-  // ===== Security: Server-side admin authentication =====
-  app.post('/api/admin-login', (req, res) => {
-    const { username, password } = req.body;
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      res.json({ success: true });
-    } else {
-      res.json({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
-    }
-  });
-
-  // ===== Registration =====
   app.post('/api/register', async (req, res) => {
-    const result = await proxyToGAS({ action: 'register', formData: req.body });
-    res.status(result.status).json(result.body);
+    try {
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'register',
+          formData: req.body
+        })
+      });
+      
+      const text = await response.text();
+      try {
+        const result = JSON.parse(text);
+        res.json(result);
+      } catch (e) {
+        console.error('GAS Error Response:', text);
+        res.status(500).json({ success: false, message: 'การเชื่อมต่อกับ Google Apps Script ผิดพลาด กรุณาตรวจสอบว่าได้คัดลอกโค้ด Code.gs ล่าสุดไปวางและ Deploy เป็น New version แล้ว' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' });
+    }
   });
 
-  // ===== Search =====
   app.post('/api/search', async (req, res) => {
-    const result = await proxyToGAS({ action: 'search', email: req.body.email, phone: req.body.phone });
-    res.status(result.status).json(result.body);
+    try {
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'search',
+          email: req.body.email,
+          phone: req.body.phone
+        })
+      });
+      
+      const text = await response.text();
+      try {
+        const result = JSON.parse(text);
+        res.json(result);
+      } catch (e) {
+        console.error('GAS Error Response:', text);
+        res.status(500).json({ success: false, message: 'การเชื่อมต่อกับ Google Apps Script ผิดพลาด กรุณาตรวจสอบการ Deploy Code.gs' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการค้นหาข้อมูล' });
+    }
   });
 
-  // ===== Update =====
   app.post('/api/update', async (req, res) => {
-    const { id, ...updateData } = req.body;
-    const result = await proxyToGAS({ action: 'update', id, updateData });
-    res.status(result.status).json(result.body);
+    try {
+      const { id, ...updateData } = req.body;
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update',
+          id,
+          updateData
+        })
+      });
+      
+      const text = await response.text();
+      try {
+        const result = JSON.parse(text);
+        res.json(result);
+      } catch (e) {
+        console.error('GAS Error Response:', text);
+        res.status(500).json({ success: false, message: 'การเชื่อมต่อกับ Google Apps Script ผิดพลาด กรุณาตรวจสอบการ Deploy Code.gs' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล' });
+    }
   });
 
-  // ===== Dashboard =====
   app.get('/api/dashboard', async (req, res) => {
-    const result = await proxyToGAS({ action: 'dashboard' });
-    res.status(result.status).json(result.body);
+    try {
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'dashboard'
+        })
+      });
+      
+      const text = await response.text();
+      try {
+        const result = JSON.parse(text);
+        res.json(result);
+      } catch (e) {
+        console.error('GAS Error Response:', text);
+        res.status(500).json({ success: false, message: 'การเชื่อมต่อกับ Google Apps Script ผิดพลาด กรุณาตรวจสอบการ Deploy Code.gs' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อมูลแดชบอร์ด' });
+    }
   });
 
   if (process.env.NODE_ENV !== 'production') {
