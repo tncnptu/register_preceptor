@@ -3,14 +3,14 @@ import { PRICING, RegistrationFormData } from './types';
 import {
   Users, CreditCard, CheckCircle2, FileText, LayoutDashboard, Code,
   AlertCircle, RefreshCw, UploadCloud, ArrowRight, ArrowLeft, Copy,
-  Phone, Mail, MapPin, GraduationCap, Heart, Calendar, Clock, Award
+  Phone, Mail, MapPin, GraduationCap, Heart, Calendar, Clock, Award, Home
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Schedule from './Schedule';
-type Tab = 'form' | 'dashboard' | 'schedule';
+type Tab = 'home' | 'form' | 'dashboard' | 'schedule';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('form');
+  const [activeTab, setActiveTab] = useState<Tab>('home');
 
   return (
     <div className="min-h-screen font-sans text-slate-800">
@@ -27,6 +27,7 @@ export default function App() {
             </div>
 
             <div className="flex space-x-1 sm:space-x-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
+              <NavButton active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home className="w-4 h-4 mr-1.5" />} label="หน้าแรก" />
               <NavButton active={activeTab === 'form'} onClick={() => setActiveTab('form')} icon={<FileText className="w-4 h-4 mr-1.5" />} label="ลงทะเบียน" />
               <NavButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar className="w-4 h-4 mr-1.5" />} label="กำหนดการ" />
               <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-4 h-4 mr-1.5" />} label="แดชบอร์ด" />
@@ -37,9 +38,9 @@ export default function App() {
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <AnimatePresence mode="wait">
-          {activeTab === 'form' && (
-            <motion.div key="form" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-              <RegistrationFlow />
+          {(activeTab === 'home' || activeTab === 'form') && (
+            <motion.div key="flow" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+              <RegistrationFlow activeTab={activeTab} onTabChange={setActiveTab} />
             </motion.div>
           )}
           {activeTab === 'dashboard' && (
@@ -49,7 +50,7 @@ export default function App() {
           )}
           {activeTab === 'schedule' && (
             <motion.div key="schedule" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-              <Schedule />
+              <Schedule onBack={() => setActiveTab('home')} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -108,8 +109,16 @@ function NavButton({ active, onClick, icon, label }: { active: boolean; onClick:
 
 type FlowStep = 'welcome' | 'edit_login' | 'edit_form' | 'select_type' | 'secret_check' | 'form_general' | 'form_alumni' | 'review' | 'submitting' | 'success';
 
-function RegistrationFlow() {
+function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabChange: (tab: Tab) => void }) {
   const [step, setStep] = useState<FlowStep>('welcome');
+
+  useEffect(() => {
+    if (activeTab === 'home') {
+      setStep('welcome');
+    } else if (activeTab === 'form' && step === 'welcome') {
+      setStep('select_type');
+    }
+  }, [activeTab]);
   const [formData, setFormData] = useState<Partial<RegistrationFormData>>({ userType: null });
   const [filePreview, setFilePreview] = useState<string | null>(null);
 
@@ -371,14 +380,14 @@ function RegistrationFlow() {
 
               {/* Action Buttons */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl mx-auto pt-2">
-                <button onClick={() => setStep('select_type')} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-navy-200 bg-gradient-to-br from-navy-50 to-white hover:border-navy-400 transition-all shadow-sm focus:outline-none group">
+                <button onClick={() => { onTabChange('form'); setStep('select_type'); }} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-navy-200 bg-gradient-to-br from-navy-50 to-white hover:border-navy-400 transition-all shadow-sm focus:outline-none group">
                   <div className="w-14 h-14 bg-navy-100 text-navy-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <FileText className="w-7 h-7" />
                   </div>
                   <span className="text-lg font-bold text-navy-700">ลงทะเบียนอบรมฯ</span>
                   <span className="text-xs text-slate-500 mt-1">สำหรับผู้สมัครใหม่</span>
                 </button>
-                <button onClick={() => setStep('edit_login')} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-white hover:border-amber-400 transition-all shadow-sm focus:outline-none group">
+                <button onClick={() => { onTabChange('form'); setStep('edit_login'); }} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-white hover:border-amber-400 transition-all shadow-sm focus:outline-none group">
                   <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <RefreshCw className="w-7 h-7" />
                   </div>
@@ -409,7 +418,7 @@ function RegistrationFlow() {
                 </div>
               </div>
               <div className="pt-6 flex space-x-4">
-                <button type="button" onClick={() => setStep('welcome')} className="w-1/3 flex items-center justify-center py-3 px-4 border border-slate-200 rounded-xl shadow-sm text-base font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors">
+                <button type="button" onClick={() => onTabChange('home')} className="w-1/3 flex items-center justify-center py-3 px-4 border border-slate-200 rounded-xl shadow-sm text-base font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors">
                   <ArrowLeft className="mr-2 w-5 h-5" /> กลับ
                 </button>
                 <button type="submit" disabled={editSearchLoading} className="w-2/3 flex items-center justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 transition-colors">
@@ -440,7 +449,7 @@ function RegistrationFlow() {
                 </button>
               </div>
               <div className="pt-4 flex justify-center">
-                <button type="button" onClick={() => setStep('welcome')} className="text-sm font-medium text-slate-400 hover:text-navy-600 transition-colors">
+                <button type="button" onClick={() => onTabChange('home')} className="text-sm font-medium text-slate-400 hover:text-navy-600 transition-colors">
                   ← ยกเลิกและกลับหน้าแรก
                 </button>
               </div>

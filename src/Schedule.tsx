@@ -1,10 +1,19 @@
 import React from 'react';
-import { Calendar, Clock } from 'lucide-react';
+import { Calendar, Clock, ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
 
-export default function Schedule() {
+export default function Schedule({ onBack }: { onBack?: () => void }) {
   return (
-    <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 rounded-2xl shadow-sm border border-slate-100">
+    <div className="max-w-4xl mx-auto bg-white p-4 sm:p-8 rounded-2xl shadow-sm border border-slate-100 relative">
+      {onBack && (
+        <button 
+          onClick={onBack}
+          className="mb-6 flex items-center text-slate-500 hover:text-navy-600 transition-colors font-medium text-sm"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1.5" />
+          กลับหน้าแรก
+        </button>
+      )}
       <div className="text-center mb-10">
         <h2 className="text-2xl sm:text-3xl font-bold text-navy-800 mb-4">กำหนดการอบรมเชิงปฏิบัติการ</h2>
         <p className="text-lg text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
