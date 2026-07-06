@@ -314,7 +314,7 @@ function RegistrationFlow() {
               {/* Hero Banner */}
               <div className="hero-banner-container -mx-6 sm:-mx-10 -mt-6 sm:-mt-10 mb-8">
                 <img
-                  src="https://github.com/tncnptu/register_preceptor/blob/main/public/preceptor-banner.png"
+                  src="https://img2.pic.in.th/banner-hero.png"
                   alt="โครงการอบรมเชิงปฏิบัติการ พยาบาลพี่เลี้ยงสู่คุณภาพการเรียนการสอน Online"
                   className="w-full h-auto object-cover"
                 />
