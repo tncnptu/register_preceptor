@@ -30,6 +30,6 @@ export interface RegistrationRecord {
 }
 
 export const PRICING = {
-  general: 1500,
+  general: 1000,
   alumni: 0,
 };

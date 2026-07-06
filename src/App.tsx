@@ -6,10 +6,7 @@ import {
   Phone, Mail, MapPin, GraduationCap, Heart, Calendar, Clock, Award
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import gasCodeRaw from './gas/Code.gs.txt?raw';
-import gasHtmlRaw from './gas/index.html.txt?raw';
-
-type Tab = 'form' | 'dashboard' | 'gas';
+type Tab = 'form' | 'dashboard';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('form');
@@ -31,7 +28,6 @@ export default function App() {
             <div className="flex space-x-1 sm:space-x-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
               <NavButton active={activeTab === 'form'} onClick={() => setActiveTab('form')} icon={<FileText className="w-4 h-4 mr-1.5" />} label="ลงทะเบียน" />
               <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-4 h-4 mr-1.5" />} label="แดชบอร์ด" />
-              <NavButton active={activeTab === 'gas'} onClick={() => setActiveTab('gas')} icon={<Code className="w-4 h-4 mr-1.5" />} label="ตั้งค่า GAS" />
             </div>
           </div>
         </div>
@@ -47,11 +43,6 @@ export default function App() {
           {activeTab === 'dashboard' && (
             <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
               <Dashboard />
-            </motion.div>
-          )}
-          {activeTab === 'gas' && (
-            <motion.div key="gas" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-              <GasSetup />
             </motion.div>
           )}
         </AnimatePresence>
@@ -76,7 +67,7 @@ export default function App() {
               <div className="space-y-1.5 text-slate-500 text-xs">
                 <p className="flex items-center"><MapPin className="w-3.5 h-3.5 mr-1.5 text-pink-500 shrink-0" />มหาวิทยาลัยปทุมธานี จ.ปทุมธานี</p>
                 <p className="flex items-center"><Phone className="w-3.5 h-3.5 mr-1.5 text-pink-500 shrink-0" />02-975-6999</p>
-                <p className="flex items-center"><Mail className="w-3.5 h-3.5 mr-1.5 text-pink-500 shrink-0" />nurse@ptu.ac.th</p>
+                <p className="flex items-center"><Mail className="w-3.5 h-3.5 mr-1.5 text-pink-500 shrink-0" />nurse.contact@ptu.ac.th</p>
               </div>
             </div>
             <div>
@@ -136,7 +127,7 @@ function RegistrationFlow() {
 
   const handleSecretCheck = (e: React.FormEvent) => {
     e.preventDefault();
-    if (secretCodeInput.trim() === 'NPTU-MENTOR26' && teacherInput.trim() !== '') {
+    if (secretCodeInput.trim() !== '' && teacherInput.trim() !== '') {
       setSecretError(false);
       setFormData({ ...formData, secretCode: secretCodeInput, referringTeacher: teacherInput });
       setStep('form_alumni');
@@ -806,25 +797,39 @@ function Dashboard() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState(false);
+  const [token, setToken] = useState('');
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'admin_nptu' && password === 'admin@nptu2569*') {
-      setIsAuthenticated(true);
-      setLoginError(false);
-      fetchDashboard();
-    } else {
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const json = await res.json();
+      if (json.success && json.token) {
+        setToken(json.token);
+        setIsAuthenticated(true);
+        setLoginError(false);
+        fetchDashboard(json.token);
+      } else {
+        setLoginError(true);
+      }
+    } catch (error) {
       setLoginError(true);
     }
   };
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = async (authToken: string) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/dashboard');
+      const res = await fetch('/api/dashboard', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
       const json = await res.json();
       if (json.success) setData(json.data);
     } catch (error) {
@@ -932,72 +937,4 @@ function Dashboard() {
   );
 }
 
-function GasSetup() {
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-6 sm:p-8">
-        <h2 className="text-2xl font-bold text-navy-700 mb-2">คำแนะนำการติดตั้ง Google Apps Script (GAS)</h2>
-        <p className="text-slate-500 mb-8">แอปพลิเคชันที่คุณเห็นในหน้านี้ทำงานบนสภาพแวดล้อมจำลอง หากต้องการนำระบบนี้ไปใช้งานจริงผ่าน Google Sheets ให้ทำตามขั้นตอนด้านล่างนี้</p>
-        <div className="space-y-8">
-          <div className="relative pl-10">
-            <div className="absolute left-0 top-0.5 w-7 h-7 bg-navy-100 text-navy-700 rounded-full flex items-center justify-center font-bold text-sm">1</div>
-            <h3 className="text-lg font-bold text-navy-800 mb-2">เตรียมพื้นที่ใน Google Drive</h3>
-            <ul className="list-disc pl-5 space-y-2 text-slate-600 text-sm">
-              <li>สร้าง Google Sheets ใหม่หนึ่งไฟล์ (ระบบจะสร้าง Sheet1 ให้เอง)</li>
-              <li>สร้าง Folder ใหม่ใน Drive สำหรับเก็บภาพสลิปที่อัปโหลด</li>
-              <li>คัดลอก Folder ID จาก URL เตรียมไว้สำหรับใส่ในโค้ด</li>
-            </ul>
-          </div>
-          <div className="relative pl-10">
-            <div className="absolute left-0 top-0.5 w-7 h-7 bg-navy-100 text-navy-700 rounded-full flex items-center justify-center font-bold text-sm">2</div>
-            <h3 className="text-lg font-bold text-navy-800 mb-2">สร้างไฟล์ Script</h3>
-            <ul className="list-disc pl-5 space-y-2 text-slate-600 text-sm">
-              <li>ในหน้า Google Sheets ไปที่เมนู <strong>ส่วนขยาย (Extensions)</strong> &gt; <strong>Apps Script</strong></li>
-              <li>คัดลอกโค้ด <code className="bg-navy-50 text-navy-700 px-1 py-0.5 rounded text-xs">Code.gs</code> ด้านล่าง ไปวางทับในไฟล์ <strong>Code.gs</strong></li>
-              <li>สร้างไฟล์ HTML ใหม่ตั้งชื่อ <strong>index</strong> (จะได้เป็น index.html) และคัดลอกโค้ดไปวาง</li>
-            </ul>
-          </div>
-          <div className="relative pl-10">
-            <div className="absolute left-0 top-0.5 w-7 h-7 bg-navy-100 text-navy-700 rounded-full flex items-center justify-center font-bold text-sm">3</div>
-            <h3 className="text-lg font-bold text-navy-800 mb-2">Deploy ระบบ</h3>
-            <ul className="list-disc pl-5 space-y-2 text-slate-600 text-sm">
-              <li>เลือกฟังก์ชัน <strong>setupSheet</strong> แล้วกด <strong>เรียกใช้ (Run)</strong> 1 ครั้ง เพื่อสร้างหัวคอลัมน์</li>
-              <li>มุมขวาบนกด <strong>การทำให้ใช้งานได้ (Deploy)</strong> &gt; <strong>การทำให้ใช้งานได้รายการใหม่ (New deployment)</strong></li>
-              <li>เลือกประเภทเป็น <strong>เว็บแอป (Web app)</strong> ให้ <strong>ทุกคน (Anyone)</strong> เข้าถึงได้</li>
-            </ul>
-          </div>
-        </div>
-      </div>
 
-      <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
-        <div className="bg-navy-50 px-6 py-4 border-b border-navy-100 flex justify-between items-center">
-          <h3 className="font-bold text-navy-800 flex items-center"><Code className="w-5 h-5 mr-2 text-navy-500" /> ไฟล์: Code.gs</h3>
-          <CopyButton text={gasCodeRaw} />
-        </div>
-        <div className="p-0 max-h-96 overflow-y-auto"><pre className="p-6 text-xs font-mono text-slate-700 bg-navy-50/30 m-0">{gasCodeRaw}</pre></div>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
-        <div className="bg-navy-50 px-6 py-4 border-b border-navy-100 flex justify-between items-center">
-          <h3 className="font-bold text-navy-800 flex items-center"><Code className="w-5 h-5 mr-2 text-pink-500" /> ไฟล์: index.html</h3>
-          <CopyButton text={gasHtmlRaw} />
-        </div>
-        <div className="p-0 max-h-96 overflow-y-auto"><pre className="p-6 text-xs font-mono text-slate-700 bg-navy-50/30 m-0">{gasHtmlRaw}</pre></div>
-      </div>
-    </div>
-  );
-}
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-  return (
-    <button onClick={handleCopy} className="text-xs font-medium px-3 py-1.5 bg-white border border-navy-200 rounded-lg hover:bg-navy-50 flex items-center transition-colors">
-      {copied ? <><CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-emerald-500" />คัดลอกแล้ว</> : <><FileText className="w-3.5 h-3.5 mr-1.5 text-navy-400" />คัดลอกโค้ด</>}
-    </button>
-  );
-}

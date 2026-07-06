@@ -47,8 +47,27 @@ function doPost(e) {
   }
 }
 
+function sanitizeInput(str) {
+  if (typeof str !== 'string') return str;
+  const trimmed = str.trim();
+  if (/^[=+\-@]/.test(trimmed)) {
+    return "'" + trimmed;
+  }
+  return trimmed;
+}
+
+function isValidMimeType(mimeType) {
+  const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
+  return allowed.includes(mimeType);
+}
+
 function submitRegistration(formData) {
   const lock = LockService.getScriptLock();
+  let emailResult = null;
+  let amount = 0;
+  let userTypeName = "";
+  let lastRowIndex = -1;
+
   try {
     lock.waitLock(30000);
   } catch (e) {
@@ -61,55 +80,68 @@ function submitRegistration(formData) {
     
     let slipUrl = "";
     if (formData.userType === 'general' && formData.slipFile && formData.slipFile.data) {
+      if (!isValidMimeType(formData.slipFile.mimeType)) {
+        throw new Error("ชนิดไฟล์อัปโหลดไม่ถูกต้อง กรุณาอัปโหลดรูปภาพหรือ PDF เท่านั้น");
+      }
       const folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
       const blob = Utilities.newBlob(
         Utilities.base64Decode(formData.slipFile.data), 
         formData.slipFile.mimeType, 
         formData.slipFile.filename
       );
-      const newFileName = `Slip_${formData.name}_${new Date().getTime()}`;
+      const newFileName = `Slip_${sanitizeInput(formData.name)}_${new Date().getTime()}`;
       blob.setName(newFileName);
       const file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       slipUrl = file.getUrl();
     }
     
-    const amount = formData.userType === 'general' ? CONFIG.PRICING.general : CONFIG.PRICING.alumni;
-    const userTypeName = formData.userType === 'general' ? 'บุคคลทั่วไป' : 'ศิษย์เก่า/พยาบาลพี่เลี้ยง';
+    amount = formData.userType === 'general' ? CONFIG.PRICING.general : CONFIG.PRICING.alumni;
+    userTypeName = formData.userType === 'general' ? 'บุคคลทั่วไป' : 'ศิษย์เก่า/พยาบาลพี่เลี้ยง';
     const timestamp = new Date();
     
     let emailStatus = "Pending";
     const row = [
       timestamp,
-      formData.name || '',
-      "'" + (formData.phone || ''),
-      formData.email || '',
+      sanitizeInput(formData.name || ''),
+      "'" + sanitizeInput(formData.phone || ''),
+      sanitizeInput(formData.email || ''),
       userTypeName,
       amount,
       slipUrl,
       emailStatus,
-      formData.referringTeacher || '',
-      formData.lineId ? "'" + formData.lineId : '',
-      formData.licenseNumber ? "'" + formData.licenseNumber : '',
+      sanitizeInput(formData.referringTeacher || ''),
+      formData.lineId ? "'" + sanitizeInput(formData.lineId) : '',
+      formData.licenseNumber ? "'" + sanitizeInput(formData.licenseNumber) : '',
       formData.licenseExpiry || ''
     ];
     
     sheet.appendRow(row);
-    const lastRowIndex = sheet.getLastRow();
+    lastRowIndex = sheet.getLastRow();
     
-    const emailResult = sendConfirmationEmail(formData, amount, userTypeName);
-    if (emailResult.success) {
-      sheet.getRange(lastRowIndex, 8).setValue("Success");
-    } else {
-      sheet.getRange(lastRowIndex, 8).setValue("Failed: " + emailResult.error);
-    }
-    
-    return { success: true, message: "ลงทะเบียนสำเร็จ" };
   } catch (error) {
     return { success: false, message: error.toString() };
   } finally {
     lock.releaseLock();
   }
+
+  // ส่งอีเมลนอก block lock เพื่อให้ปลดล็อกเร็วขึ้น
+  if (lastRowIndex > 0) {
+    emailResult = sendConfirmationEmail(formData, amount, userTypeName);
+    try {
+      // เรียก sheet ใหม่
+      const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME);
+      if (emailResult.success) {
+        sheet.getRange(lastRowIndex, 8).setValue("Success");
+      } else {
+        sheet.getRange(lastRowIndex, 8).setValue("Failed: " + emailResult.error);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  return { success: true, message: "ลงทะเบียนสำเร็จ" };
 }
 
 function searchRegistration(email, phone) {
@@ -157,24 +189,32 @@ function updateRegistration(id, updateData) {
     
     const rowIndex = parseInt(id);
     if (!rowIndex || rowIndex < 2) throw new Error("Invalid ID");
+
+    // ตรวจสอบ IDOR (Insecure Direct Object Reference)
+    const existingPhone = String(sheet.getRange(rowIndex, 3).getValue()).replace(/^'/, '');
+    const existingEmail = String(sheet.getRange(rowIndex, 4).getValue());
     
-    if (updateData.name) sheet.getRange(rowIndex, 2).setValue(updateData.name);
-    if (updateData.phone) sheet.getRange(rowIndex, 3).setValue("'" + updateData.phone);
-    if (updateData.email) sheet.getRange(rowIndex, 4).setValue(updateData.email);
+    if (existingEmail !== updateData.email || existingPhone !== updateData.phone) {
+      throw new Error("ไม่อนุญาตให้อัปเดตข้อมูล: ข้อมูลยืนยันตัวตนไม่ถูกต้อง");
+    }
     
-    if (updateData.referringTeacher) sheet.getRange(rowIndex, 9).setValue(updateData.referringTeacher);
-    if (updateData.lineId) sheet.getRange(rowIndex, 10).setValue("'" + updateData.lineId);
-    if (updateData.licenseNumber) sheet.getRange(rowIndex, 11).setValue("'" + updateData.licenseNumber);
+    if (updateData.name) sheet.getRange(rowIndex, 2).setValue(sanitizeInput(updateData.name));
+    if (updateData.referringTeacher) sheet.getRange(rowIndex, 9).setValue(sanitizeInput(updateData.referringTeacher));
+    if (updateData.lineId) sheet.getRange(rowIndex, 10).setValue("'" + sanitizeInput(updateData.lineId));
+    if (updateData.licenseNumber) sheet.getRange(rowIndex, 11).setValue("'" + sanitizeInput(updateData.licenseNumber));
     if (updateData.licenseExpiry) sheet.getRange(rowIndex, 12).setValue(updateData.licenseExpiry);
     
     if (updateData.userType === 'general' && updateData.slipFile && updateData.slipFile.data) {
+      if (!isValidMimeType(updateData.slipFile.mimeType)) {
+        throw new Error("ชนิดไฟล์อัปโหลดไม่ถูกต้อง กรุณาอัปโหลดรูปภาพหรือ PDF เท่านั้น");
+      }
       const folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
       const blob = Utilities.newBlob(
         Utilities.base64Decode(updateData.slipFile.data), 
         updateData.slipFile.mimeType, 
         updateData.slipFile.filename
       );
-      const newFileName = `Slip_${updateData.name || 'Update'}_${new Date().getTime()}`;
+      const newFileName = `Slip_${sanitizeInput(updateData.name || 'Update')}_${new Date().getTime()}`;
       blob.setName(newFileName);
       const file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
