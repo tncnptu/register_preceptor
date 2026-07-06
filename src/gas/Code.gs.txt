@@ -1,0 +1,281 @@
+// ==========================================
+// การตั้งค่าตัวแปร (Configuration)
+// ==========================================
+const CONFIG = {
+  FOLDER_ID: '1r8x1H3jrOvLEpGaoUQdGBwT7sjKQ_z8w',
+  SHEET_NAME: 'datareg',
+  ADMIN_EMAIL: 'ns@ptu.ac.th',
+  PRICING: {
+    general: 1000, // บุคคลทั่วไป
+    alumni: 0      // ศิษย์เก่า/พยาบาลพี่เลี้ยง ไม่มีการชำระเงิน
+  }
+};
+
+function doGet() {
+  return HtmlService.createTemplateFromFile('index')
+    .evaluate()
+    .setTitle('ระบบลงทะเบียนอบรมออนไลน์')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+function doPost(e) {
+  try {
+    const requestData = JSON.parse(e.postData.contents);
+    const action = requestData.action;
+
+    if (action === 'register') {
+      const result = submitRegistration(requestData.formData);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'dashboard') {
+      const result = getDashboardData();
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'search') {
+      const result = searchRegistration(requestData.email, requestData.phone);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'update') {
+      const result = updateRegistration(requestData.id, requestData.updateData);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ success: false, message: 'Invalid action' })).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function submitRegistration(formData) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+  } catch (e) {
+    return { success: false, message: 'ระบบกำลังดำเนินการรายการอื่นอยู่ กรุณาลองใหม่อีกครั้ง' };
+  }
+
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) throw new Error("ไม่พบ Sheet ที่ชื่อ " + CONFIG.SHEET_NAME);
+    
+    let slipUrl = "";
+    if (formData.userType === 'general' && formData.slipFile && formData.slipFile.data) {
+      const folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
+      const blob = Utilities.newBlob(
+        Utilities.base64Decode(formData.slipFile.data), 
+        formData.slipFile.mimeType, 
+        formData.slipFile.filename
+      );
+      const newFileName = `Slip_${formData.name}_${new Date().getTime()}`;
+      blob.setName(newFileName);
+      const file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      slipUrl = file.getUrl();
+    }
+    
+    const amount = formData.userType === 'general' ? CONFIG.PRICING.general : CONFIG.PRICING.alumni;
+    const userTypeName = formData.userType === 'general' ? 'บุคคลทั่วไป' : 'ศิษย์เก่า/พยาบาลพี่เลี้ยง';
+    const timestamp = new Date();
+    
+    let emailStatus = "Pending";
+    const row = [
+      timestamp,
+      formData.name || '',
+      "'" + (formData.phone || ''),
+      formData.email || '',
+      userTypeName,
+      amount,
+      slipUrl,
+      emailStatus,
+      formData.referringTeacher || '',
+      formData.lineId ? "'" + formData.lineId : '',
+      formData.licenseNumber ? "'" + formData.licenseNumber : '',
+      formData.licenseExpiry || ''
+    ];
+    
+    sheet.appendRow(row);
+    const lastRowIndex = sheet.getLastRow();
+    
+    const emailResult = sendConfirmationEmail(formData, amount, userTypeName);
+    if (emailResult.success) {
+      sheet.getRange(lastRowIndex, 8).setValue("Success");
+    } else {
+      sheet.getRange(lastRowIndex, 8).setValue("Failed: " + emailResult.error);
+    }
+    
+    return { success: true, message: "ลงทะเบียนสำเร็จ" };
+  } catch (error) {
+    return { success: false, message: error.toString() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function searchRegistration(email, phone) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) throw new Error("ไม่พบ Sheet");
+    
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][3] === email && String(data[i][2]).replace(/^'/, '') === phone) {
+        return {
+          success: true,
+          data: {
+            id: i + 1,
+            name: data[i][1],
+            phone: String(data[i][2]).replace(/^'/, ''),
+            email: data[i][3],
+            userType: data[i][4] === 'บุคคลทั่วไป' ? 'general' : 'alumni',
+            slipUrl: data[i][6],
+            referringTeacher: data[i][8],
+            lineId: String(data[i][9]).replace(/^'/, ''),
+            licenseNumber: String(data[i][10]).replace(/^'/, ''),
+            licenseExpiry: data[i][11]
+          }
+        };
+      }
+    }
+    return { success: false, message: 'ไม่พบข้อมูลการลงทะเบียนในระบบ' };
+  } catch (error) {
+    return { success: false, message: error.toString() };
+  }
+}
+
+function updateRegistration(id, updateData) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+  } catch (e) {
+    return { success: false, message: 'ระบบกำลังดำเนินการรายการอื่นอยู่ กรุณาลองใหม่อีกครั้ง' };
+  }
+
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) throw new Error("ไม่พบ Sheet");
+    
+    const rowIndex = parseInt(id);
+    if (!rowIndex || rowIndex < 2) throw new Error("Invalid ID");
+    
+    if (updateData.name) sheet.getRange(rowIndex, 2).setValue(updateData.name);
+    if (updateData.phone) sheet.getRange(rowIndex, 3).setValue("'" + updateData.phone);
+    if (updateData.email) sheet.getRange(rowIndex, 4).setValue(updateData.email);
+    
+    if (updateData.referringTeacher) sheet.getRange(rowIndex, 9).setValue(updateData.referringTeacher);
+    if (updateData.lineId) sheet.getRange(rowIndex, 10).setValue("'" + updateData.lineId);
+    if (updateData.licenseNumber) sheet.getRange(rowIndex, 11).setValue("'" + updateData.licenseNumber);
+    if (updateData.licenseExpiry) sheet.getRange(rowIndex, 12).setValue(updateData.licenseExpiry);
+    
+    if (updateData.userType === 'general' && updateData.slipFile && updateData.slipFile.data) {
+      const folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
+      const blob = Utilities.newBlob(
+        Utilities.base64Decode(updateData.slipFile.data), 
+        updateData.slipFile.mimeType, 
+        updateData.slipFile.filename
+      );
+      const newFileName = `Slip_${updateData.name || 'Update'}_${new Date().getTime()}`;
+      blob.setName(newFileName);
+      const file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      sheet.getRange(rowIndex, 7).setValue(file.getUrl());
+    }
+
+    return { success: true, message: "อัปเดตข้อมูลสำเร็จ" };
+  } catch (error) {
+    return { success: false, message: error.toString() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function sendConfirmationEmail(data, amount, userTypeName) {
+  try {
+    const subject = `ยืนยันการลงทะเบียนอบรม: คุณ ${data.name}`;
+    const body = `
+      เรียน คุณ ${data.name},
+      
+      ระบบได้รับข้อมูลการลงทะเบียนของท่านเรียบร้อยแล้ว
+      
+      ข้อมูลการลงทะเบียน:
+      - ชื่อ-นามสกุล: ${data.name}
+      - เบอร์โทรศัพท์: ${data.phone}
+      - อีเมล: ${data.email}
+      - ประเภทผู้สมัคร: ${userTypeName}
+      ${data.userType === 'general' ? `- จำนวนเงินที่ชำระ: ${amount} บาท` : ''}
+      
+      ขอบคุณที่ให้ความสนใจเข้าร่วมการอบรมของเรา
+      หากมีข้อสงสัยเพิ่มเติม สามารถติดต่อได้ที่ ${CONFIG.ADMIN_EMAIL}
+      
+      ขอแสดงความนับถือ,
+      ทีมงานผู้จัดอบรม
+    `;
+    
+    MailApp.sendEmail({
+      to: data.email,
+      subject: subject,
+      body: body
+    });
+    
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function getDashboardData() {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) throw new Error("ไม่พบ Sheet");
+    
+    const data = sheet.getDataRange().getValues();
+    const records = data.slice(1);
+    
+    let totalCount = records.length;
+    let generalCount = 0;
+    let alumniCount = 0;
+    let totalRevenue = 0;
+    
+    records.forEach(row => {
+      if (row[4] === 'บุคคลทั่วไป') generalCount++;
+      if (row[4] === 'ศิษย์เก่า/พยาบาลพี่เลี้ยง') alumniCount++;
+      if (Number(row[5])) totalRevenue += Number(row[5]);
+    });
+    
+    return {
+      success: true,
+      data: {
+        total: totalCount,
+        general: generalCount,
+        alumni: alumniCount,
+        revenue: totalRevenue
+      }
+    };
+  } catch (error) {
+    return { success: false, message: error.toString() };
+  }
+}
+
+function setupSheet() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME) 
+    || SpreadsheetApp.getActiveSpreadsheet().insertSheet(CONFIG.SHEET_NAME);
+    
+  sheet.clear();
+  const headers = [
+    "Timestamp", 
+    "ชื่อ-นามสกุล", 
+    "เบอร์โทรศัพท์", 
+    "อีเมล", 
+    "ประเภทผู้สมัคร", 
+    "จำนวนเงินที่ต้องชำระ (บาท)", 
+    "ลิงก์สลิปชำระเงิน", 
+    "สถานะการส่งอีเมล",
+    "ชื่ออาจารย์ผู้แนะนำ",
+    "ID Line",
+    "เลขที่ใบประกอบวิชาชีพ",
+    "วันหมดอายุใบประกอบวิชาชีพ"
+  ];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#f3f4f6");
+  sheet.setFrozenRows(1);
+}

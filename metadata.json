@@ -1,0 +1,8 @@
+{
+  "name": "ระบบลงทะเบียนอบรมออนไลน์",
+  "description": "Online training registration system with form, review, admin dashboard, and GAS export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

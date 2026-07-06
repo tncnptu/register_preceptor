@@ -1,0 +1,163 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Kanit", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-navy: #1e3a5f;
+  --color-brand-navy-light: #2a4f7a;
+  --color-brand-pink: #e91e8c;
+  --color-brand-pink-light: #f472b6;
+  --color-brand-pink-soft: #fce7f3;
+  --color-brand-gold: #f5c842;
+  --color-brand-teal: #0d9488;
+}
+
+/* ===== Custom Background Pattern ===== */
+.bg-pattern {
+  background-color: #f0f4f8;
+  background-image:
+    radial-gradient(at 20% 30%, rgba(233, 30, 140, 0.06) 0px, transparent 50%),
+    radial-gradient(at 80% 10%, rgba(30, 58, 95, 0.06) 0px, transparent 50%),
+    radial-gradient(at 60% 80%, rgba(245, 200, 66, 0.04) 0px, transparent 50%);
+}
+
+/* ===== Glass Card ===== */
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 10px 30px -5px rgba(30, 58, 95, 0.08);
+}
+
+/* ===== Gradient Buttons ===== */
+.btn-primary {
+  background: linear-gradient(135deg, #e91e8c 0%, #c2185b 100%);
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(233, 30, 140, 0.3);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(233, 30, 140, 0.4);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-navy {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2a4f7a 100%);
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(30, 58, 95, 0.3);
+}
+.btn-navy:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(30, 58, 95, 0.4);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #f5c842 0%, #e6b800 100%);
+  color: #1e3a5f;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(245, 200, 66, 0.3);
+}
+.btn-gold:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(245, 200, 66, 0.4);
+}
+
+/* ===== Navbar Gradient ===== */
+.nav-gradient {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2a4f7a 60%, #3b5e91 100%);
+}
+
+/* ===== Hero Gradient ===== */
+.hero-gradient {
+  background: linear-gradient(160deg, #fce7f3 0%, #ede9fe 30%, #e0f2fe 60%, #f0fdf4 100%);
+}
+
+/* ===== Floating Animation ===== */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-8px) rotate(1deg); }
+  66% { transform: translateY(4px) rotate(-1deg); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+.animate-float-delay {
+  animation: float 8s ease-in-out 2s infinite;
+}
+
+/* ===== Gradient Text ===== */
+.text-gradient {
+  background: linear-gradient(135deg, #1e3a5f 0%, #e91e8c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== Pulse Glow ===== */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(233, 30, 140, 0.3); }
+  50% { box-shadow: 0 0 0 12px rgba(233, 30, 140, 0); }
+}
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ===== Custom Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #e91e8c, #1e3a5f);
+  border-radius: 999px;
+}
+
+/* ===== Toast Animation ===== */
+@keyframes slide-in {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes slide-out {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
+}
+.toast-enter {
+  animation: slide-in 0.3s ease-out forwards;
+}
+.toast-exit {
+  animation: slide-out 0.3s ease-in forwards;
+}
+
+/* ===== Hide Scrollbar Utility ===== */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ===== Progress Bar Shimmer ===== */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.progress-shimmer {
+  background: linear-gradient(90deg, #e91e8c 0%, #f472b6 40%, #e91e8c 60%, #c2185b 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* ===== Input Focus Ring ===== */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #e91e8c !important;
+  box-shadow: 0 0 0 3px rgba(233, 30, 140, 0.15) !important;
+}

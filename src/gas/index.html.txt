@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบลงทะเบียนอบรมออนไลน์</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
+  <nav class="bg-white shadow-sm mb-6">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-center space-x-8 h-16">
+        <button onclick="showTab('formTab')" id="btn-formTab" class="text-blue-600 border-b-2 border-blue-600 px-3 py-2 font-medium text-sm">ลงทะเบียน</button>
+        <button onclick="showTab('dashboardTab')" id="btn-dashboardTab" class="text-gray-500 hover:text-gray-700 px-3 py-2 font-medium text-sm">แดชบอร์ดผู้ดูแล</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+    <!-- Registration Form Tab -->
+    <div id="formTab" class="space-y-6">
+      
+      <!-- Step 1: Select Type -->
+      <div id="step-select_type" class="bg-white p-6 sm:p-10 rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">เลือกประเภทผู้สมัคร</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label class="relative flex cursor-pointer rounded-xl border p-4 shadow-sm focus:outline-none hover:bg-gray-50">
+            <input type="radio" name="userType" value="general" class="sr-only" onchange="handleTypeChange('general')">
+            <span class="flex flex-1">
+              <span class="flex flex-col">
+                <span class="block text-lg font-medium text-gray-900 text-center py-4">บุคคลทั่วไป</span>
+              </span>
+            </span>
+          </label>
+          <label class="relative flex cursor-pointer rounded-xl border p-4 shadow-sm focus:outline-none hover:bg-gray-50">
+            <input type="radio" name="userType" value="alumni" class="sr-only" onchange="handleTypeChange('alumni')">
+            <span class="flex flex-1">
+              <span class="flex flex-col">
+                <span class="block text-lg font-medium text-gray-900 text-center py-4">ศิษย์เก่า / พยาบาลพี่เลี้ยง</span>
+              </span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Step 2: Secret Code -->
+      <div id="step-secret_check" class="bg-white p-6 sm:p-10 rounded-lg shadow-md hidden">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">ยืนยันสิทธิ์ศิษย์เก่า/พยาบาลพี่เลี้ยง</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">รหัสลับ *</label>
+            <input type="text" id="secretCode" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+            <p class="text-xs text-gray-500 mt-1">ใบ้: NPTU-MENTOR...</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">ชื่ออาจารย์ผู้แนะนำ *</label>
+            <input type="text" id="referringTeacher" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+          </div>
+          <div class="pt-4 flex space-x-4">
+            <button onclick="goToStep('select_type')" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">กลับ</button>
+            <button onclick="verifySecret()" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">ตรวจสอบ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3a: Form General -->
+      <div id="step-form_general" class="bg-white p-6 sm:p-10 rounded-lg shadow-md hidden">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">ข้อมูลลงทะเบียน (บุคคลทั่วไป)</h2>
+        <form id="formGeneral" onsubmit="submitFormGeneral(event)" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">ชื่อ-นามสกุล *</label>
+            <input type="text" id="g_name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">เบอร์โทรศัพท์ *</label>
+              <input type="tel" id="g_phone" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">อีเมล *</label>
+              <input type="email" id="g_email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+            </div>
+          </div>
+          <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 my-6">
+            <h3 class="font-bold text-blue-900 mb-2">บัญชีสำหรับการโอนชำระค่าสมัคร</h3>
+            <p class="text-sm text-blue-800">ชื่อบัญชี: <strong>มหาวิทยาลัยปทุมธานี</strong></p>
+            <p class="text-sm text-blue-800">ธนาคาร: <strong>กรุงเทพ</strong></p>
+            <p class="text-sm text-blue-800">เลขที่บัญชี: <strong>011-7-167395</strong></p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">อัปโหลดหลักฐานการชำระเงิน *</label>
+            <input type="file" id="g_slipFile" accept="image/*,.pdf" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 p-2 border border-gray-300 rounded-md">
+          </div>
+          <div class="pt-4 flex space-x-4">
+            <button type="button" onclick="goToStep('select_type')" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">กลับ</button>
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">ถัดไป</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Step 3b: Form Alumni -->
+      <div id="step-form_alumni" class="bg-white p-6 sm:p-10 rounded-lg shadow-md hidden">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">ข้อมูลลงทะเบียน (ศิษย์เก่า/พยาบาลพี่เลี้ยง)</h2>
+        <form id="formAlumni" onsubmit="submitFormAlumni(event)" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">ชื่อ-นามสกุล *</label>
+            <p class="text-xs text-gray-500 mb-1">กรณีมีการเปลี่ยนแปลงชื่อ-นามสกุล กรุณาวงเล็บชื่อนามสกุลเดิม</p>
+            <input type="text" id="a_name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">เบอร์โทรติดต่อ *</label>
+              <input type="tel" id="a_phone" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">ID Line *</label>
+              <input type="text" id="a_line" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">อีเมลที่ใช้งานจริง *</label>
+            <p class="text-xs text-gray-500 mb-1">รับข้อมูลจากคณะฯ ช่องทางการเข้าห้องอบรม ระเบียบการอบรม ฯ</p>
+            <input type="email" id="a_email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">เลขที่ใบประกอบวิชาชีพ *</label>
+              <input type="text" id="a_licenseNo" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">วันหมดอายุใบประกอบวิชาชีพ *</label>
+              <input type="date" id="a_licenseExp" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+            </div>
+          </div>
+          <div class="pt-4 flex space-x-4">
+            <button type="button" onclick="goToStep('secret_check')" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">กลับ</button>
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">ถัดไป</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Step 4: Review -->
+      <div id="step-review" class="bg-white p-6 sm:p-10 rounded-lg shadow-md hidden">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">ตรวจสอบข้อมูลก่อนยืนยัน</h2>
+        <div class="bg-blue-50 p-4 rounded-md mb-6 text-sm text-blue-800">
+          กรุณาตรวจสอบความถูกต้องของข้อมูล หากถูกต้องแล้วให้กดปุ่ม "ยืนยันการลงทะเบียน"
+        </div>
+        <dl id="review-content" class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 mb-6"></dl>
+        <div class="flex space-x-4">
+          <button onclick="backToForm()" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">กลับไปแก้ไข</button>
+          <button onclick="submitData()" id="btn-submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none">ยืนยันการลงทะเบียน</button>
+        </div>
+      </div>
+
+      <!-- Loading / Success -->
+      <div id="step-submitting" class="bg-white p-12 rounded-lg shadow-md hidden flex-col items-center justify-center text-center">
+        <div class="loader mb-4"></div>
+        <h3 class="text-lg font-medium text-gray-900">กำลังบันทึกข้อมูล...</h3>
+      </div>
+      
+      <div id="step-success" class="bg-white p-12 rounded-lg shadow-md hidden flex-col items-center justify-center text-center">
+        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+          <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">ลงทะเบียนสำเร็จ!</h2>
+        <p class="text-gray-600 mb-6">ข้อมูลของคุณถูกบันทึกเรียบร้อยแล้ว</p>
+        <button onclick="location.reload()" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">กลับหน้าหลัก</button>
+      </div>
+    </div>
+
+    <!-- Dashboard Tab -->
+    <div id="dashboardTab" class="bg-white p-6 rounded-lg shadow-md hidden">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">แดชบอร์ดสรุปข้อมูล</h2>
+        <button onclick="loadDashboard()" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">รีเฟรช</button>
+      </div>
+      <div id="dash-loading" class="flex justify-center py-8"><div class="loader"></div></div>
+      <div id="dash-content" class="hidden">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div class="bg-blue-50 rounded-lg p-4">
+            <h3 class="text-sm font-medium text-blue-800 mb-1">ยอดผู้สมัครทั้งหมด</h3>
+            <p id="dash-total" class="text-3xl font-bold text-blue-900">0</p>
+          </div>
+          <div class="bg-green-50 rounded-lg p-4">
+            <h3 class="text-sm font-medium text-green-800 mb-1">ยอดเงินรวมโดยประมาณ</h3>
+            <p id="dash-revenue" class="text-3xl font-bold text-green-900">0 บาท</p>
+          </div>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-3">แบ่งตามประเภท</h3>
+        <div class="bg-gray-50 rounded-lg p-4">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-600">บุคคลทั่วไป</span><span id="dash-general" class="font-semibold">0</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">ศิษย์เก่า/พยาบาลพี่เลี้ยง</span><span id="dash-alumni" class="font-semibold">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentData = {};
+    let currentStep = 'select_type';
+    const STEPS = ['select_type', 'secret_check', 'form_general', 'form_alumni', 'review', 'submitting', 'success'];
+
+    function showTab(tabId) {
+      document.getElementById('formTab').classList.add('hidden');
+      document.getElementById('dashboardTab').classList.add('hidden');
+      document.getElementById('btn-formTab').className = "text-gray-500 hover:text-gray-700 px-3 py-2 font-medium text-sm";
+      document.getElementById('btn-dashboardTab').className = "text-gray-500 hover:text-gray-700 px-3 py-2 font-medium text-sm";
+      document.getElementById(tabId).classList.remove('hidden');
+      document.getElementById('btn-' + tabId).className = "text-blue-600 border-b-2 border-blue-600 px-3 py-2 font-medium text-sm";
+      if(tabId === 'dashboardTab') loadDashboard();
+    }
+
+    function goToStep(stepId) {
+      STEPS.forEach(s => {
+        const el = document.getElementById('step-' + s);
+        if(el) el.classList.add('hidden');
+      });
+      document.getElementById('step-' + stepId).classList.remove('hidden');
+      if (stepId === 'submitting') {
+        document.getElementById('step-' + stepId).classList.add('flex');
+      }
+      if (stepId === 'success') {
+        document.getElementById('step-' + stepId).classList.add('flex');
+      }
+      currentStep = stepId;
+    }
+
+    function handleTypeChange(type) {
+      currentData.userType = type;
+      if (type === 'general') {
+        goToStep('form_general');
+      } else {
+        goToStep('secret_check');
+      }
+    }
+
+    function verifySecret() {
+      const code = document.getElementById('secretCode').value;
+      const teacher = document.getElementById('referringTeacher').value;
+      if (code.trim() === 'NPTU-MENTOR26' && teacher.trim() !== '') {
+        currentData.secretCode = code;
+        currentData.referringTeacher = teacher;
+        goToStep('form_alumni');
+      } else {
+        alert('รหัสลับไม่ถูกต้อง หรือ ลืมกรอกชื่ออาจารย์ผู้แนะนำ');
+      }
+    }
+
+    function submitFormGeneral(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('g_slipFile');
+      if(fileInput.files.length === 0) { alert("กรุณาแนบไฟล์"); return; }
+      currentData.name = document.getElementById('g_name').value;
+      currentData.phone = document.getElementById('g_phone').value;
+      currentData.email = document.getElementById('g_email').value;
+      currentData.file = fileInput.files[0];
+      buildReview();
+      goToStep('review');
+    }
+
+    function submitFormAlumni(e) {
+      e.preventDefault();
+      currentData.name = document.getElementById('a_name').value;
+      currentData.phone = document.getElementById('a_phone').value;
+      currentData.email = document.getElementById('a_email').value;
+      currentData.lineId = document.getElementById('a_line').value;
+      currentData.licenseNumber = document.getElementById('a_licenseNo').value;
+      currentData.licenseExpiry = document.getElementById('a_licenseExp').value;
+      buildReview();
+      goToStep('review');
+    }
+
+    function buildReview() {
+      let html = '';
+      const typeLabel = currentData.userType === 'general' ? 'บุคคลทั่วไป' : 'ศิษย์เก่า/พยาบาลพี่เลี้ยง';
+      html += `<div class="sm:col-span-2"><dt class="text-sm font-medium text-gray-500">ประเภทผู้สมัคร</dt><dd class="mt-1 text-sm font-semibold text-gray-900">${typeLabel}</dd></div>`;
+      html += `<div><dt class="text-sm font-medium text-gray-500">ชื่อ-นามสกุล</dt><dd class="mt-1 text-sm text-gray-900">${currentData.name}</dd></div>`;
+      html += `<div><dt class="text-sm font-medium text-gray-500">เบอร์โทรศัพท์</dt><dd class="mt-1 text-sm text-gray-900">${currentData.phone}</dd></div>`;
+      html += `<div><dt class="text-sm font-medium text-gray-500">อีเมล</dt><dd class="mt-1 text-sm text-gray-900">${currentData.email}</dd></div>`;
+      
+      if (currentData.userType === 'general') {
+        html += `<div class="sm:col-span-2"><dt class="text-sm font-medium text-gray-500">ไฟล์หลักฐาน (ชื่อไฟล์)</dt><dd class="mt-1 text-sm text-gray-900">${currentData.file.name}</dd></div>`;
+      } else {
+        html += `<div><dt class="text-sm font-medium text-gray-500">อาจารย์ผู้แนะนำ</dt><dd class="mt-1 text-sm text-gray-900">${currentData.referringTeacher}</dd></div>`;
+        html += `<div><dt class="text-sm font-medium text-gray-500">ID Line</dt><dd class="mt-1 text-sm text-gray-900">${currentData.lineId}</dd></div>`;
+        html += `<div><dt class="text-sm font-medium text-gray-500">เลขที่ใบประกอบวิชาชีพ</dt><dd class="mt-1 text-sm text-gray-900">${currentData.licenseNumber}</dd></div>`;
+        html += `<div><dt class="text-sm font-medium text-gray-500">วันหมดอายุใบประกอบวิชาชีพ</dt><dd class="mt-1 text-sm text-gray-900">${currentData.licenseExpiry}</dd></div>`;
+      }
+      document.getElementById('review-content').innerHTML = html;
+    }
+
+    function backToForm() {
+      goToStep(currentData.userType === 'general' ? 'form_general' : 'form_alumni');
+    }
+
+    function submitData() {
+      goToStep('submitting');
+      if (currentData.userType === 'general' && currentData.file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const base64Data = e.target.result.split(',')[1];
+          callGAS({
+            ...currentData,
+            slipFile: { filename: currentData.file.name, mimeType: currentData.file.type, data: base64Data }
+          });
+        };
+        reader.readAsDataURL(currentData.file);
+      } else {
+        callGAS(currentData);
+      }
+    }
+
+    function callGAS(payload) {
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if(response.success) { goToStep('success'); } 
+          else { alert("Error: " + response.message); backToForm(); }
+        })
+        .withFailureHandler(function(error) {
+          alert("Connection Failed: " + error); backToForm();
+        })
+        .submitRegistration(payload);
+    }
+    
+    function loadDashboard() {
+      document.getElementById('dash-loading').classList.remove('hidden');
+      document.getElementById('dash-content').classList.add('hidden');
+      google.script.run
+        .withSuccessHandler(function(res) {
+          document.getElementById('dash-loading').classList.add('hidden');
+          if(res.success) {
+            document.getElementById('dash-content').classList.remove('hidden');
+            document.getElementById('dash-total').innerText = res.data.total;
+            document.getElementById('dash-revenue').innerText = res.data.revenue.toLocaleString() + " บาท";
+            document.getElementById('dash-general').innerText = res.data.general;
+            document.getElementById('dash-alumni').innerText = res.data.alumni;
+          }
+        })
+        .getDashboardData();
+    }
+  </script>
+</body>
+</html>
