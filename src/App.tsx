@@ -98,8 +98,8 @@ function NavButton({ active, onClick, icon, label }: { active: boolean; onClick:
     <button
       onClick={onClick}
       className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${active
-          ? 'bg-white/20 text-white shadow-sm backdrop-blur-sm'
-          : 'text-navy-200 hover:text-white hover:bg-white/10'
+        ? 'bg-white/20 text-white shadow-sm backdrop-blur-sm'
+        : 'text-navy-200 hover:text-white hover:bg-white/10'
         }`}
     >
       {icon}
@@ -314,7 +314,7 @@ function RegistrationFlow() {
               {/* Hero Banner */}
               <div className="hero-banner-container -mx-6 sm:-mx-10 -mt-6 sm:-mt-10 mb-8">
                 <img
-                  src={`${import.meta.env.BASE_URL}hero-banner.png`}
+                  src="https://github.com/tncnptu/register_preceptor/blob/main/public/preceptor-banner.png"
                   alt="โครงการอบรมเชิงปฏิบัติการ พยาบาลพี่เลี้ยงสู่คุณภาพการเรียนการสอน Online"
                   className="w-full h-auto object-cover"
                 />
