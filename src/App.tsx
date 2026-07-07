@@ -471,7 +471,7 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-navy-700 mb-1">รหัสผู้แนะนำ<span className="text-pink-500">*</span></label>
-                  <input type="text" required value={secretCodeInput} onChange={(e) => setSecretCodeInput(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 transition-colors bg-slate-50/50" placeholder="ระบุรหัสผู้นแนะนำ" />
+                  <input type="text" required value={secretCodeInput} onChange={(e) => setSecretCodeInput(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 transition-colors bg-slate-50/50" placeholder="ระบุรหัสผู้แนะนำ" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-navy-700 mb-1">ชื่ออาจารย์ผู้แนะนำ <span className="text-pink-500">*</span></label>
