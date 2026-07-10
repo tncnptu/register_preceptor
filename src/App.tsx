@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Schedule from './Schedule';
+import Swal from 'sweetalert2';
 type Tab = 'home' | 'form' | 'dashboard' | 'schedule';
 
 export default function App() {
@@ -28,7 +29,19 @@ export default function App() {
 
             <div className="flex space-x-1 sm:space-x-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
               <NavButton active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home className="w-4 h-4 mr-1.5" />} label="หน้าแรก" />
-              <NavButton active={activeTab === 'form'} onClick={() => setActiveTab('form')} icon={<FileText className="w-4 h-4 mr-1.5" />} label="ลงทะเบียน" />
+              <NavButton 
+                active={activeTab === 'form'} 
+                onClick={() => Swal.fire({
+                  icon: 'warning',
+                  title: 'ปิดปรับปรุงชั่วคราว',
+                  text: 'ระบบปิดปรับปรุงชั่วคราว จะเปิดกลับมาให้ลงทะเบียนได้ในเร็วๆนี้ ต้องกราบขออภัยในความไม่สะดวก',
+                  confirmButtonText: 'ตกลง',
+                  confirmButtonColor: '#3b82f6'
+                })} 
+                icon={<FileText className="w-4 h-4 mr-1.5" />} 
+                label="ลงทะเบียน" 
+                disabled 
+              />
               <NavButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar className="w-4 h-4 mr-1.5" />} label="กำหนดการ" />
               <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-4 h-4 mr-1.5" />} label="แดชบอร์ด" />
             </div>
@@ -92,14 +105,14 @@ export default function App() {
   );
 }
 
-function NavButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
+function NavButton({ active, onClick, icon, label, disabled }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string; disabled?: boolean }) {
   return (
     <button
       onClick={onClick}
       className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${active
         ? 'bg-white/20 text-white shadow-sm backdrop-blur-sm'
         : 'text-navy-200 hover:text-white hover:bg-white/10'
-        }`}
+        } ${disabled ? 'opacity-50 cursor-not-allowed hover:bg-transparent' : ''}`}
     >
       {icon}
       {label}
@@ -380,12 +393,21 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
 
               {/* Action Buttons */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl mx-auto pt-2">
-                <button onClick={() => { onTabChange('form'); setStep('select_type'); }} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-navy-200 bg-gradient-to-br from-navy-50 to-white hover:border-navy-400 transition-all shadow-sm focus:outline-none group">
-                  <div className="w-14 h-14 bg-navy-100 text-navy-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <button onClick={(e) => { 
+                  e.preventDefault(); 
+                  Swal.fire({
+                    icon: 'warning',
+                    title: 'ปิดปรับปรุงชั่วคราว',
+                    text: 'ระบบปิดปรับปรุงชั่วคราว จะเปิดกลับมาให้ลงทะเบียนได้ในเร็วๆนี้ ต้องกราบขออภัยในความไม่สะดวก',
+                    confirmButtonText: 'ตกลง',
+                    confirmButtonColor: '#3b82f6'
+                  }); 
+                }} className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-slate-200 bg-slate-50 opacity-60 cursor-not-allowed shadow-sm focus:outline-none">
+                  <div className="w-14 h-14 bg-slate-200 text-slate-500 rounded-full flex items-center justify-center mb-3">
                     <FileText className="w-7 h-7" />
                   </div>
-                  <span className="text-lg font-bold text-navy-700">ลงทะเบียนอบรมฯ</span>
-                  <span className="text-xs text-slate-500 mt-1">สำหรับผู้สมัครใหม่</span>
+                  <span className="text-lg font-bold text-slate-600">ลงทะเบียนอบรมฯ</span>
+                  <span className="text-xs text-slate-400 mt-1">ปิดปรับปรุงชั่วคราว</span>
                 </button>
                 <button onClick={() => { onTabChange('form'); setStep('edit_login'); }} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-white hover:border-amber-400 transition-all shadow-sm focus:outline-none group">
                   <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
