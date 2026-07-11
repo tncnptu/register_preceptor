@@ -39,6 +39,9 @@ function doPost(e) {
     } else if (action === 'update') {
       const result = updateRegistration(requestData.id, requestData.updateData);
       return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'verify-alumni') {
+      const result = verifyAlumni(requestData.searchId);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     }
 
     return ContentService.createTextOutput(JSON.stringify({ success: false, message: 'Invalid action' })).setMimeType(ContentService.MimeType.JSON);
@@ -170,6 +173,36 @@ function searchRegistration(email, phone) {
       }
     }
     return { success: false, message: 'ไม่พบข้อมูลการลงทะเบียนในระบบ' };
+  } catch (error) {
+    return { success: false, message: error.toString() };
+  }
+}
+
+function verifyAlumni(searchId) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("AlumniData");
+    if (!sheet) throw new Error("ไม่พบ Sheet ข้อมูลศิษย์เก่า (AlumniData)");
+    
+    if (!searchId || String(searchId).trim() === '') {
+      return { success: false, message: 'กรุณาระบุข้อมูลการค้นหา' };
+    }
+    
+    const query = String(searchId).trim();
+    const data = sheet.getDataRange().getValues();
+    
+    // ค้นหาตั้งแต่ row 2 (row 1 เป็น header)
+    for (let i = 1; i < data.length; i++) {
+      const studentId = String(data[i][0]).replace(/^'/, '').trim();
+      const thaiId = String(data[i][1]).replace(/^'/, '').trim();
+      
+      if (studentId === query || thaiId === query) {
+        return {
+          success: true,
+          name: data[i][3] // คืนค่า ชื่อ-นามสกุล ใน Column D
+        };
+      }
+    }
+    return { success: false, message: 'ไม่พบข้อมูลศิษย์เก่าในระบบ กรุณาตรวจสอบความถูกต้อง' };
   } catch (error) {
     return { success: false, message: error.toString() };
   }

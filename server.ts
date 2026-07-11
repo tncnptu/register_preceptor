@@ -60,7 +60,7 @@ async function startServer() {
       username === process.env.ADMIN_USERNAME && 
       password === process.env.ADMIN_PASSWORD
     ) {
-      const token = jwt.sign({ username }, process.env.JWT_SECRET || 'secret', { expiresIn: '8h' });
+      const token = jwt.sign({ username }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
       res.json({ success: true, token });
     } else {
       res.status(401).json({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
@@ -73,6 +73,31 @@ async function startServer() {
       res.json({ success: true });
     } else {
       res.status(400).json({ success: false, message: 'รหัสผู้แนะนำไม่ถูกต้อง' });
+    }
+  });
+
+  app.post('/api/verify-alumni', async (req, res) => {
+    try {
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'verify-alumni',
+          searchId: req.body.searchId
+        })
+      });
+      
+      const text = await response.text();
+      try {
+        const result = JSON.parse(text);
+        res.json(result);
+      } catch (e) {
+        console.error('GAS Error Response:', text);
+        res.status(500).json({ success: false, message: 'การเชื่อมต่อกับ Google Apps Script ผิดพลาด' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล' });
     }
   });
 

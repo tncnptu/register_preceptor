@@ -1,4 +1,4 @@
-export type UserType = 'general' | 'alumni' | null;
+export type UserType = 'general' | 'alumni' | 'alumni_new' | null;
 
 export interface RegistrationFormData {
   userType: UserType;
@@ -11,6 +11,8 @@ export interface RegistrationFormData {
   lineId?: string;
   licenseNumber?: string;
   licenseExpiry?: string;
+  originalName?: string;
+  newName?: string;
 }
 
 export interface RegistrationRecord {
@@ -32,4 +34,5 @@ export interface RegistrationRecord {
 export const PRICING = {
   general: 1000,
   alumni: 0,
+  alumni_new: 700,
 };
