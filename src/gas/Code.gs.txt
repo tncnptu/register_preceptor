@@ -338,11 +338,21 @@ function getDashboardData() {
     let generalCount = 0;
     let alumniCount = 0;
     let totalRevenue = 0;
+    let preceptorGroups = {};
     
     records.forEach(row => {
       if (row[4] === 'บุคคลทั่วไป') generalCount++;
       if (row[4] === 'ศิษย์เก่า/พยาบาลพี่เลี้ยง') alumniCount++;
       if (Number(row[5])) totalRevenue += Number(row[5]);
+      
+      // row[8] คือ ชื่ออาจารย์ผู้แนะนำ
+      const teacherName = row[8] ? String(row[8]).trim() : '';
+      if (teacherName !== '') {
+        if (!preceptorGroups[teacherName]) {
+          preceptorGroups[teacherName] = [];
+        }
+        preceptorGroups[teacherName].push(row[1]); // ชื่อ-นามสกุล
+      }
     });
     
     return {
@@ -351,7 +361,8 @@ function getDashboardData() {
         total: totalCount,
         general: generalCount,
         alumni: alumniCount,
-        revenue: totalRevenue
+        revenue: totalRevenue,
+        preceptorGroups: preceptorGroups
       }
     };
   } catch (error) {

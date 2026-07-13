@@ -1229,6 +1229,33 @@ function Dashboard() {
               </div>
             </div>
           </div>
+
+          {data.preceptorGroups && Object.keys(data.preceptorGroups).length > 0 && (
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden mt-6">
+              <div className="px-6 py-5 border-b border-slate-100 bg-indigo-50/50 flex items-center">
+                <Users className="w-5 h-5 text-indigo-600 mr-2" />
+                <h3 className="text-base font-semibold text-navy-800">รายชื่อพยาบาลพี่เลี้ยง (แบ่งตามอาจารย์ผู้แนะนำ)</h3>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {Object.entries(data.preceptorGroups).map(([teacher, students]) => (
+                  <div key={teacher} className="px-6 py-5">
+                    <h4 className="text-sm font-bold text-navy-700 mb-3 flex items-center">
+                      <div className="w-2 h-2 bg-indigo-400 rounded-full mr-2"></div>
+                      อาจารย์ผู้แนะนำ: <span className="text-indigo-700 ml-1">{teacher}</span>
+                    </h4>
+                    <ul className="space-y-2 pl-4 border-l-2 border-indigo-50 ml-1">
+                      {(students as string[]).map((name, index) => (
+                        <li key={index} className="text-sm text-slate-600 flex items-start">
+                          <span className="text-indigo-300 mr-2 mt-0.5">•</span>
+                          ชื่อผู้ลงทะเบียน: {name}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       ) : null}
     </div>
