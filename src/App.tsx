@@ -277,16 +277,42 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
     }
   };
 
-  const handleGeneralSubmit = (e: React.FormEvent) => {
+  const checkDuplicateBeforeReview = async () => {
+    try {
+      const res = await fetch('/api/check-duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, phone: formData.phone })
+      });
+      const result = await res.json();
+      if (result.success && result.isDuplicate) {
+        const typeMsg = result.type === 'email' ? 'อีเมล' : 'เบอร์โทรศัพท์';
+        const confirmEdit = window.confirm(`พบว่า${typeMsg}นี้มีการลงทะเบียนไว้แล้ว คุณต้องการไปยังหน้า 'แก้ไขข้อมูล' แทนหรือไม่?`);
+        if (confirmEdit) {
+          setEditEmail(formData.email || '');
+          setEditPhone(formData.phone || '');
+          setStep('edit_login');
+        }
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error(e);
+      return true;
+    }
+  };
+
+  const handleGeneralSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone || !formData.email || !formData.lineId || !formData.licenseNumber || !formData.licenseExpiry || !formData.slipFile) {
       alert('กรุณากรอกข้อมูลและแนบสลิปให้ครบถ้วน');
       return;
     }
-    setStep('review');
+    const canProceed = await checkDuplicateBeforeReview();
+    if (canProceed) setStep('review');
   };
 
-  const handleAlumniNewSubmit = (e: React.FormEvent) => {
+  const handleAlumniNewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone || !formData.email || !formData.lineId || !formData.licenseNumber || !formData.licenseExpiry || !formData.slipFile) {
       alert('กรุณากรอกข้อมูลและแนบสลิปให้ครบถ้วน');
@@ -296,16 +322,18 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
       alert('กรุณาระบุชื่อ-นามสกุลใหม่');
       return;
     }
-    setStep('review');
+    const canProceed = await checkDuplicateBeforeReview();
+    if (canProceed) setStep('review');
   };
 
-  const handleAlumniSubmit = (e: React.FormEvent) => {
+  const handleAlumniSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone || !formData.email || !formData.lineId || !formData.licenseNumber || !formData.licenseExpiry) {
       alert('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
-    setStep('review');
+    const canProceed = await checkDuplicateBeforeReview();
+    if (canProceed) setStep('review');
   };
 
   const handleSubmitData = async () => {

@@ -53,6 +53,31 @@ app.post('/api/verify-code', (req, res) => {
   }
 });
 
+app.post('/api/verify-alumni', async (req, res) => {
+  try {
+    const response = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'verify-alumni',
+        searchId: req.body.searchId
+      })
+    });
+    
+    const text = await response.text();
+    try {
+      const result = JSON.parse(text);
+      res.json(result);
+    } catch (e) {
+      console.error('GAS Error Response:', text);
+      res.status(500).json({ success: false, message: 'การเชื่อมต่อกับ Google Apps Script ผิดพลาด' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล' });
+  }
+});
+
 app.post('/api/register', async (req, res) => {
   try {
     const formData = req.body;
@@ -142,6 +167,32 @@ app.post('/api/update', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล' });
+  }
+});
+
+app.post('/api/check-duplicate', async (req, res) => {
+  try {
+    const response = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'check-duplicate',
+        email: req.body.email,
+        phone: req.body.phone
+      })
+    });
+    
+    const text = await response.text();
+    try {
+      const result = JSON.parse(text);
+      res.json(result);
+    } catch (e) {
+      console.error('GAS Error Response:', text);
+      res.status(500).json({ success: false, message: 'การเชื่อมต่อกับ Google Apps Script ผิดพลาด' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล' });
   }
 });
 

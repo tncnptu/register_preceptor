@@ -193,6 +193,32 @@ async function startServer() {
     }
   });
 
+  app.post('/api/check-duplicate', async (req, res) => {
+    try {
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'check-duplicate',
+          email: req.body.email,
+          phone: req.body.phone
+        })
+      });
+      
+      const text = await response.text();
+      try {
+        const result = JSON.parse(text);
+        res.json(result);
+      } catch (e) {
+        console.error('GAS Error Response:', text);
+        res.status(500).json({ success: false, message: 'การเชื่อมต่อกับ Google Apps Script ผิดพลาด' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล' });
+    }
+  });
+
   app.get('/api/dashboard', authenticateToken, async (req, res) => {
     try {
       const response = await fetch(GAS_URL, {

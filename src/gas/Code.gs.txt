@@ -42,6 +42,9 @@ function doPost(e) {
     } else if (action === 'verify-alumni') {
       const result = verifyAlumni(requestData.searchId);
       return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'check-duplicate') {
+      const result = checkDuplicate(requestData.email, requestData.phone);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
     }
 
     return ContentService.createTextOutput(JSON.stringify({ success: false, message: 'Invalid action' })).setMimeType(ContentService.MimeType.JSON);
@@ -203,6 +206,33 @@ function verifyAlumni(searchId) {
       }
     }
     return { success: false, message: 'ไม่พบข้อมูลศิษย์เก่าในระบบ กรุณาตรวจสอบความถูกต้อง' };
+  } catch (error) {
+    return { success: false, message: error.toString() };
+  }
+}
+
+function checkDuplicate(email, phone) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) throw new Error("ไม่พบ Sheet");
+    
+    const data = sheet.getDataRange().getValues();
+    const cleanPhone = String(phone).replace(/^'/, '').trim();
+    const cleanEmail = String(email).trim().toLowerCase();
+
+    for (let i = 1; i < data.length; i++) {
+      const sheetPhone = String(data[i][2]).replace(/^'/, '').trim();
+      const sheetEmail = String(data[i][3]).trim().toLowerCase();
+
+      if (cleanEmail && sheetEmail === cleanEmail) {
+        return { success: true, isDuplicate: true, type: 'email' };
+      }
+      if (cleanPhone && sheetPhone === cleanPhone) {
+        return { success: true, isDuplicate: true, type: 'phone' };
+      }
+    }
+    
+    return { success: true, isDuplicate: false };
   } catch (error) {
     return { success: false, message: error.toString() };
   }
