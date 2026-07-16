@@ -56,9 +56,13 @@ async function startServer() {
 
   app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
+    
+    const adminUser = process.env.ADMIN_USERNAME || 'admin';
+    const adminPass = process.env.ADMIN_PASSWORD || 'admin';
+
     if (
-      username === process.env.ADMIN_USERNAME && 
-      password === process.env.ADMIN_PASSWORD
+      username === adminUser && 
+      password === adminPass
     ) {
       const token = jwt.sign({ username }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
       res.json({ success: true, token });

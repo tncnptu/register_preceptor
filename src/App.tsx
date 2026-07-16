@@ -74,7 +74,7 @@ export default function App() {
               <p className="font-semibold text-navy-700 mb-2">ติดต่อเรา</p>
               <div className="space-y-1.5 text-slate-500 text-xs">
                 <p className="flex items-center"><MapPin className="w-3.5 h-3.5 mr-1.5 text-pink-500 shrink-0" />มหาวิทยาลัยปทุมธานี จ.ปทุมธานี</p>
-                <p className="flex items-center"><Phone className="w-3.5 h-3.5 mr-1.5 text-pink-500 shrink-0" />02-975-6999</p>
+                <p className="flex items-center"><Phone className="w-3.5 h-3.5 mr-1.5 text-pink-500 shrink-0" />02-975-6999 ต่อ 1605</p>
                 <p className="flex items-center"><Mail className="w-3.5 h-3.5 mr-1.5 text-pink-500 shrink-0" />nurse.contact@ptu.ac.th</p>
               </div>
             </div>
@@ -161,7 +161,7 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
           body: JSON.stringify({ code: secretCodeInput.trim() })
         });
         const data = await res.json();
-        
+
         if (data.success) {
           setSecretError(false);
           setFormData({ ...formData, secretCode: secretCodeInput.trim(), referringTeacher: teacherInput.trim() });
@@ -190,7 +190,7 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
           body: JSON.stringify({ searchId: alumniSearchInput.trim() })
         });
         const data = await res.json();
-        
+
         if (data.success && data.name) {
           setAlumniSearchError(false);
           setFormData({ ...formData, name: data.name, originalName: data.name, newName: '' });
@@ -547,7 +547,7 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
           {step === 'secret_check' && (
             <motion.form key="secret_check" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleSecretCheck} className="space-y-6">
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-navy-700">ยืนยันสิทธิ์ศิษย์เก่า/พยาบาลพี่เลี้ยง</h2>
+                <h2 className="text-2xl font-bold text-navy-700">ยืนยันสิทธิ์พยาบาลพี่เลี้ยง</h2>
                 <p className="text-slate-500 mt-2">กรุณากรอกรหัสผู้แนะนำและชื่ออาจารย์ผู้แนะนำ</p>
               </div>
               {secretError && (
@@ -826,7 +826,7 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
             <motion.form key="form_alumni" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleAlumniSubmit} className="space-y-6">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-pink-50 text-pink-600 border border-pink-100 mb-3">
-                  <GraduationCap className="w-3.5 h-3.5 mr-1" /> ศิษย์เก่า / พยาบาลพี่เลี้ยง
+                  <GraduationCap className="w-3.5 h-3.5 mr-1" /> พยาบาลพี่เลี้ยง
                 </div>
                 <h2 className="text-2xl font-bold text-navy-700">ข้อมูลลงทะเบียน</h2>
               </div>
@@ -978,7 +978,9 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
                   <div className="sm:col-span-2">
                     <dt className="text-sm font-medium text-slate-500">ประเภทผู้สมัคร</dt>
-                    <dd className="mt-1 text-base font-semibold text-navy-800">{formData.userType === 'general' ? 'บุคคลทั่วไป' : 'ศิษย์เก่า / พยาบาลพี่เลี้ยง'}</dd>
+                    <dd className="mt-1 text-base font-semibold text-navy-800">
+                      {formData.userType === 'general' ? 'บุคคลทั่วไป' : formData.userType === 'alumni_new' ? 'ศิษย์เก่า' : 'พยาบาลพี่เลี้ยง'}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-sm font-medium text-slate-500">ชื่อ-นามสกุล</dt>
@@ -1224,7 +1226,11 @@ function Dashboard() {
                 <div className="flex items-baseline"><span className="text-2xl font-semibold text-navy-800">{data.general}</span><span className="ml-2 text-sm text-slate-500">คน</span></div>
               </div>
               <div className="px-6 py-5 flex items-center justify-between">
-                <div className="flex items-center"><div className="w-3 h-3 bg-pink-500 rounded-full mr-3"></div><span className="text-sm font-medium text-navy-800">ศิษย์เก่า / พยาบาลพี่เลี้ยง</span></div>
+                <div className="flex items-center"><div className="w-3 h-3 bg-indigo-500 rounded-full mr-3"></div><span className="text-sm font-medium text-navy-800">ศิษย์เก่า</span></div>
+                <div className="flex items-baseline"><span className="text-2xl font-semibold text-navy-800">{data.alumni_new || 0}</span><span className="ml-2 text-sm text-slate-500">คน</span></div>
+              </div>
+              <div className="px-6 py-5 flex items-center justify-between">
+                <div className="flex items-center"><div className="w-3 h-3 bg-pink-500 rounded-full mr-3"></div><span className="text-sm font-medium text-navy-800">พยาบาลพี่เลี้ยง</span></div>
                 <div className="flex items-baseline"><span className="text-2xl font-semibold text-navy-800">{data.alumni}</span><span className="ml-2 text-sm text-slate-500">คน</span></div>
               </div>
             </div>

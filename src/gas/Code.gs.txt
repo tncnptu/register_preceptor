@@ -7,7 +7,8 @@ const CONFIG = {
   ADMIN_EMAIL: 'ns@ptu.ac.th',
   PRICING: {
     general: 1000, // บุคคลทั่วไป
-    alumni: 0      // ศิษย์เก่า/พยาบาลพี่เลี้ยง ไม่มีการชำระเงิน
+    alumni_new: 700, // ศิษย์เก่า
+    alumni: 0      // พยาบาลพี่เลี้ยง ไม่มีการชำระเงิน
   }
 };
 
@@ -102,8 +103,16 @@ function submitRegistration(formData) {
       slipUrl = file.getUrl();
     }
     
-    amount = formData.userType === 'general' ? CONFIG.PRICING.general : CONFIG.PRICING.alumni;
-    userTypeName = formData.userType === 'general' ? 'บุคคลทั่วไป' : 'ศิษย์เก่า/พยาบาลพี่เลี้ยง';
+    if (formData.userType === 'general') {
+      amount = CONFIG.PRICING.general;
+      userTypeName = 'บุคคลทั่วไป';
+    } else if (formData.userType === 'alumni_new') {
+      amount = CONFIG.PRICING.alumni_new;
+      userTypeName = 'ศิษย์เก่า';
+    } else {
+      amount = CONFIG.PRICING.alumni;
+      userTypeName = 'พยาบาลพี่เลี้ยง';
+    }
     const timestamp = new Date();
     
     let emailStatus = "Pending";
@@ -165,7 +174,7 @@ function searchRegistration(email, phone) {
             name: data[i][1],
             phone: String(data[i][2]).replace(/^'/, ''),
             email: data[i][3],
-            userType: data[i][4] === 'บุคคลทั่วไป' ? 'general' : 'alumni',
+            userType: data[i][4] === 'บุคคลทั่วไป' ? 'general' : (data[i][4] === 'ศิษย์เก่า' ? 'alumni_new' : 'alumni'),
             slipUrl: data[i][6],
             referringTeacher: data[i][8],
             lineId: String(data[i][9]).replace(/^'/, ''),
@@ -267,7 +276,7 @@ function updateRegistration(id, updateData) {
     if (updateData.licenseNumber) sheet.getRange(rowIndex, 11).setValue("'" + sanitizeInput(updateData.licenseNumber));
     if (updateData.licenseExpiry) sheet.getRange(rowIndex, 12).setValue(updateData.licenseExpiry);
     
-    if (updateData.userType === 'general' && updateData.slipFile && updateData.slipFile.data) {
+    if ((updateData.userType === 'general' || updateData.userType === 'alumni_new') && updateData.slipFile && updateData.slipFile.data) {
       if (!isValidMimeType(updateData.slipFile.mimeType)) {
         throw new Error("ชนิดไฟล์อัปโหลดไม่ถูกต้อง กรุณาอัปโหลดรูปภาพหรือ PDF เท่านั้น");
       }
@@ -336,13 +345,16 @@ function getDashboardData() {
     
     let totalCount = records.length;
     let generalCount = 0;
+    let alumniNewCount = 0;
     let alumniCount = 0;
     let totalRevenue = 0;
     let preceptorGroups = {};
     
     records.forEach(row => {
       if (row[4] === 'บุคคลทั่วไป') generalCount++;
-      if (row[4] === 'ศิษย์เก่า/พยาบาลพี่เลี้ยง') alumniCount++;
+      if (row[4] === 'ศิษย์เก่า') alumniNewCount++;
+      if (row[4] === 'พยาบาลพี่เลี้ยง') alumniCount++;
+      if (row[4] === 'ศิษย์เก่า/พยาบาลพี่เลี้ยง') alumniCount++; // fallback for older data
       if (Number(row[5])) totalRevenue += Number(row[5]);
       
       // row[8] คือ ชื่ออาจารย์ผู้แนะนำ
@@ -360,6 +372,7 @@ function getDashboardData() {
       data: {
         total: totalCount,
         general: generalCount,
+        alumni_new: alumniNewCount,
         alumni: alumniCount,
         revenue: totalRevenue,
         preceptorGroups: preceptorGroups

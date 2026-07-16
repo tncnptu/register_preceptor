@@ -61,7 +61,7 @@
 
       <!-- Step 2: Secret Code -->
       <div id="step-secret_check" class="bg-white p-6 sm:p-10 rounded-lg shadow-md hidden">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">ยืนยันสิทธิ์ศิษย์เก่า/พยาบาลพี่เลี้ยง</h2>
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">ยืนยันสิทธิ์พยาบาลพี่เลี้ยง</h2>
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700">รหัสลับ *</label>
@@ -116,7 +116,7 @@
 
       <!-- Step 3b: Form Alumni -->
       <div id="step-form_alumni" class="bg-white p-6 sm:p-10 rounded-lg shadow-md hidden">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">ข้อมูลลงทะเบียน (ศิษย์เก่า/พยาบาลพี่เลี้ยง)</h2>
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">ข้อมูลลงทะเบียน (พยาบาลพี่เลี้ยง)</h2>
         <form id="formAlumni" onsubmit="submitFormAlumni(event)" class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700">ชื่อ-นามสกุล *</label>
@@ -207,8 +207,11 @@
           <div class="flex justify-between items-center mb-2">
             <span class="text-gray-600">บุคคลทั่วไป</span><span id="dash-general" class="font-semibold">0</span>
           </div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-600">ศิษย์เก่า</span><span id="dash-alumni-new" class="font-semibold">0</span>
+          </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-600">ศิษย์เก่า/พยาบาลพี่เลี้ยง</span><span id="dash-alumni" class="font-semibold">0</span>
+            <span class="text-gray-600">พยาบาลพี่เลี้ยง</span><span id="dash-alumni" class="font-semibold">0</span>
           </div>
         </div>
       </div>
@@ -292,7 +295,7 @@
 
     function buildReview() {
       let html = '';
-      const typeLabel = currentData.userType === 'general' ? 'บุคคลทั่วไป' : 'ศิษย์เก่า/พยาบาลพี่เลี้ยง';
+      const typeLabel = currentData.userType === 'general' ? 'บุคคลทั่วไป' : 'พยาบาลพี่เลี้ยง';
       html += `<div class="sm:col-span-2"><dt class="text-sm font-medium text-gray-500">ประเภทผู้สมัคร</dt><dd class="mt-1 text-sm font-semibold text-gray-900">${typeLabel}</dd></div>`;
       html += `<div><dt class="text-sm font-medium text-gray-500">ชื่อ-นามสกุล</dt><dd class="mt-1 text-sm text-gray-900">${currentData.name}</dd></div>`;
       html += `<div><dt class="text-sm font-medium text-gray-500">เบอร์โทรศัพท์</dt><dd class="mt-1 text-sm text-gray-900">${currentData.phone}</dd></div>`;
@@ -353,6 +356,7 @@
             document.getElementById('dash-total').innerText = res.data.total;
             document.getElementById('dash-revenue').innerText = res.data.revenue.toLocaleString() + " บาท";
             document.getElementById('dash-general').innerText = res.data.general;
+            if(document.getElementById('dash-alumni-new')) document.getElementById('dash-alumni-new').innerText = res.data.alumni_new || 0;
             document.getElementById('dash-alumni').innerText = res.data.alumni;
           }
         })
