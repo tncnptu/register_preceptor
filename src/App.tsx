@@ -522,18 +522,21 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
                     <Users className="w-6 h-6" />
                   </div>
                   <span className="text-lg font-bold text-navy-700">บุคคลทั่วไป</span>
+                  <span className="text-xs text-slate-500 mt-2 text-center">ผู้สมัครเป็นบุคคลภายนอก</span>
                 </button>
                 <button onClick={() => handleTypeSelect('alumni_new')} className="card-hover flex flex-col items-center justify-center p-8 rounded-xl border-2 border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm focus:outline-none">
                   <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-3">
                     <Award className="w-6 h-6" />
                   </div>
                   <span className="text-lg font-bold text-navy-700">ศิษย์เก่า</span>
+                  <span className="text-xs text-slate-500 mt-2 text-center">ผู้สมัครเป็นผู้สำเร็จการศึกษาจากคณะพยาบาลศาสตร์ มหาวิทยาลัยปทุมธานี</span>
                 </button>
                 <button onClick={() => handleTypeSelect('alumni')} className="card-hover flex flex-col items-center justify-center p-8 rounded-xl border-2 border-slate-200 bg-white hover:bg-pink-50 hover:border-pink-300 transition-all shadow-sm focus:outline-none">
                   <div className="w-12 h-12 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mb-3">
                     <GraduationCap className="w-6 h-6" />
                   </div>
                   <span className="text-lg font-bold text-navy-700">พยาบาลพี่เลี้ยง</span>
+                  <span className="text-xs text-slate-500 mt-2 text-center">ผู้สมัครเป็นพยาบาลพี่เลี้ยงให้กับคณะพยาบาลศาสตร์ มหาวิทยาลัยปทุมธานี</span>
                 </button>
               </div>
               <div className="pt-4 flex justify-center">
