@@ -86,7 +86,7 @@ function submitRegistration(formData) {
     if (!sheet) throw new Error("ไม่พบ Sheet ที่ชื่อ " + CONFIG.SHEET_NAME);
     
     let slipUrl = "";
-    if (formData.userType === 'general' && formData.slipFile && formData.slipFile.data) {
+    if ((formData.userType === 'general' || formData.userType === 'alumni_new') && formData.slipFile && formData.slipFile.data) {
       if (!isValidMimeType(formData.slipFile.mimeType)) {
         throw new Error("ชนิดไฟล์อัปโหลดไม่ถูกต้อง กรุณาอัปโหลดรูปภาพหรือ PDF เท่านั้น");
       }

@@ -919,7 +919,7 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
                   </>
                 )}
 
-                {formData.userType === 'general' && (
+                {(formData.userType === 'general' || formData.userType === 'alumni_new') && (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -1011,7 +1011,7 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
                     <dd className="mt-1 text-base font-semibold text-navy-800">{formData.licenseExpiry}</dd>
                   </div>
 
-                  {formData.userType === 'general' && formData.slipFile && (
+                  {(formData.userType === 'general' || formData.userType === 'alumni_new') && formData.slipFile && (
                     <div className="sm:col-span-2 pt-4 border-t border-navy-100">
                       <dt className="text-sm font-medium text-slate-500 mb-2">ไฟล์หลักฐานการชำระเงิน</dt>
                       <dd className="mt-1 flex items-center p-3 bg-white border border-slate-200 rounded-xl">
