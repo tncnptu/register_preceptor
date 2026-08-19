@@ -6,6 +6,7 @@ import { createServer as createViteServer } from 'vite';
 import rateLimit from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 
+
 // The URL provided by the user for their Google Apps Script Web App
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyJ6Mp449Y2jYBEYKdwRgCb7GvlKHo-TpzapeVpq-XvYyzm7FoY1EU_3bFt0bId7_Id/exec';
 
@@ -17,25 +18,34 @@ async function startServer() {
   const PORT = 3000;
 
   console.log('Setting up Express...');
-  
+  if (!process.env.ADMIN_USERNAME) {
+    console.error('ADMIN_USERNAME is not defined');
+    process.exit(1);
+  }
+
   // Rate Limiting: Max 100 requests per 15 minutes
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
     message: { success: false, message: 'คำขอมากเกินไป กรุณารอสักครู่แล้วลองใหม่' }
   });
-  
+
   app.use('/api', limiter); // Apply to /api routes
   app.use(express.json({ limit: '10mb' }));
 
   // Serve hero banner image
   app.get('/hero-banner.png', (req, res) => {
-    if (fs.existsSync(HERO_BANNER_PATH)) {
-      res.setHeader('Content-Type', 'image/png');
-      res.setHeader('Cache-Control', 'public, max-age=86400');
-      fs.createReadStream(HERO_BANNER_PATH).pipe(res);
-    } else {
-      res.status(404).send('Not found');
+    try {
+      if (fs.existsSync(HERO_BANNER_PATH)) {
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        fs.createReadStream(HERO_BANNER_PATH).pipe(res);
+      } else {
+        res.status(404).send('Not found');
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal server error');
     }
   });
 
@@ -55,28 +65,42 @@ async function startServer() {
   };
 
   app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
-    
-    const adminUser = process.env.ADMIN_USERNAME || 'admin';
-    const adminPass = process.env.ADMIN_PASSWORD || 'admin';
+    try {
+      const { username, password } = req.body;
+      if (!process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD) {
+        console.error('ADMIN_USERNAME or ADMIN_PASSWORD is not defined');
+        res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดภายในระบบ' });
+        return;
+      }
+      const adminUser = process.env.ADMIN_USERNAME;
+      const adminPass = process.env.ADMIN_PASSWORD;
 
-    if (
-      username === adminUser && 
-      password === adminPass
-    ) {
-      const token = jwt.sign({ username }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
-      res.json({ success: true, token });
-    } else {
-      res.status(401).json({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+      if (
+        username === adminUser &&
+        password === adminPass
+      ) {
+        const token = jwt.sign({ username }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
+        res.json({ success: true, token });
+      } else {
+        res.status(401).json({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดภายในระบบ' });
     }
   });
 
   app.post('/api/verify-code', (req, res) => {
-    const { code } = req.body;
-    if (code === process.env.ALUMNI_SECRET_CODE) {
-      res.json({ success: true });
-    } else {
-      res.status(400).json({ success: false, message: 'รหัสผู้แนะนำไม่ถูกต้อง' });
+    try {
+      const { code } = req.body;
+      if (code === process.env.ALUMNI_SECRET_CODE) {
+        res.json({ success: true });
+      } else {
+        res.status(400).json({ success: false, message: 'รหัสผู้แนะนำไม่ถูกต้อง' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดภายในระบบ' });
     }
   });
 
@@ -90,7 +114,7 @@ async function startServer() {
           searchId: req.body.searchId
         })
       });
-      
+
       const text = await response.text();
       try {
         const result = JSON.parse(text);
@@ -108,14 +132,14 @@ async function startServer() {
   app.post('/api/register', async (req, res) => {
     try {
       const formData = req.body;
-      
+
       // Server-side validation for alumni secret code
       if (formData.userType === 'alumni') {
         if (formData.secretCode !== process.env.ALUMNI_SECRET_CODE) {
           return res.status(400).json({ success: false, message: 'รหัสลับสำหรับศิษย์เก่าไม่ถูกต้อง' });
         }
       }
-      
+
       const response = await fetch(GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -124,7 +148,7 @@ async function startServer() {
           formData: formData
         })
       });
-      
+
       const text = await response.text();
       try {
         const result = JSON.parse(text);
@@ -150,7 +174,7 @@ async function startServer() {
           phone: req.body.phone
         })
       });
-      
+
       const text = await response.text();
       try {
         const result = JSON.parse(text);
@@ -172,7 +196,7 @@ async function startServer() {
       if (!updateData.email || !updateData.phone) {
         return res.status(400).json({ success: false, message: 'ต้องระบุอีเมลและเบอร์โทรศัพท์เพื่อยืนยันตัวตน' });
       }
-      
+
       const response = await fetch(GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -182,7 +206,7 @@ async function startServer() {
           updateData
         })
       });
-      
+
       const text = await response.text();
       try {
         const result = JSON.parse(text);
@@ -208,7 +232,7 @@ async function startServer() {
           phone: req.body.phone
         })
       });
-      
+
       const text = await response.text();
       try {
         const result = JSON.parse(text);
@@ -232,7 +256,7 @@ async function startServer() {
           action: 'dashboard'
         })
       });
-      
+
       const text = await response.text();
       try {
         const result = JSON.parse(text);

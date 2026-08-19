@@ -13,6 +13,7 @@ export interface RegistrationFormData {
   licenseExpiry?: string;
   originalName?: string;
   newName?: string;
+  uid?: string; // Column N — assigned UID from sheet
 }
 
 export interface RegistrationRecord {

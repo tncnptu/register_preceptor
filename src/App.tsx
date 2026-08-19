@@ -3,7 +3,7 @@ import { PRICING, RegistrationFormData } from './types';
 import {
   Users, CreditCard, CheckCircle2, FileText, LayoutDashboard, Code,
   AlertCircle, RefreshCw, UploadCloud, ArrowRight, ArrowLeft, Copy,
-  Phone, Mail, MapPin, GraduationCap, Heart, Calendar, Clock, Award, Home, LogOut
+  Phone, Mail, MapPin, GraduationCap, Heart, Calendar, Clock, Award, Home, LogOut, Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Schedule from './Schedule';
@@ -107,7 +107,7 @@ function NavButton({ active, onClick, icon, label }: { active: boolean; onClick:
   );
 }
 
-type FlowStep = 'welcome' | 'edit_login' | 'edit_form' | 'select_type' | 'secret_check' | 'alumni_verify' | 'form_general' | 'form_alumni' | 'form_alumni_new' | 'review' | 'submitting' | 'success';
+type FlowStep = 'welcome' | 'edit_login' | 'edit_form' | 'pending_approval' | 'select_type' | 'secret_check' | 'alumni_verify' | 'form_general' | 'form_alumni' | 'form_alumni_new' | 'review' | 'submitting' | 'success';
 
 function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabChange: (tab: Tab) => void }) {
   const [step, setStep] = useState<FlowStep>('welcome');
@@ -224,7 +224,9 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
         if (result.data.slipUrl) {
           setFilePreview(result.data.slipUrl);
         }
-        setStep('edit_form');
+        // Route based on whether UID has been assigned
+        const hasUid = result.data.uid && String(result.data.uid).trim() !== '';
+        setStep(hasUid ? 'edit_form' : 'pending_approval');
       } else {
         alert(result.message);
       }
@@ -471,9 +473,9 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
                 </button>
                 <button onClick={() => { onTabChange('form'); setStep('edit_login'); }} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-white hover:border-amber-400 transition-all shadow-sm focus:outline-none group">
                   <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <RefreshCw className="w-7 h-7" />
+                    <Search className="w-7 h-7" />
                   </div>
-                  <span className="text-lg font-bold text-amber-700">แก้ไขข้อมูล</span>
+                  <span className="text-lg font-bold text-amber-700">ตรวจสอบสถานะ</span>
                   <span className="text-xs text-slate-500 mt-1">(ผู้ลงทะเบียนแล้ว)</span>
                 </button>
               </div>
@@ -872,100 +874,274 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
             </motion.form>
           )}
 
-          {step === 'edit_form' && (
-            <motion.form key="edit_form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleEditSubmit} className="space-y-6">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-navy-700">แก้ไขข้อมูลการลงทะเบียน</h2>
-                <p className="text-slate-500 mt-2">คุณสามารถปรับปรุงข้อมูลด้านล่างแล้วกดยืนยัน</p>
+          {step === 'pending_approval' && (
+            <motion.div key="pending_approval" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+              <div style={{ width: '100%', backgroundColor: '#f2ede0', borderRadius: '16px', padding: '30px 20px', textAlign: 'center' }}>
+                <div style={{
+                  maxWidth: '600px', margin: '0 auto', border: '2px solid #c9a24b',
+                  borderRadius: '12px', backgroundColor: '#fffdf7', padding: '40px 30px',
+                  fontFamily: "'Sarabun', 'Tahoma', sans-serif"
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+                    <div style={{ width: '80px', height: '80px', backgroundColor: '#fff6dd', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #e6d9b8' }}>
+                      <Clock className="w-10 h-10 text-amber-600" />
+                    </div>
+                  </div>
+                  <h2 style={{ fontSize: '24px', color: '#5a4523', fontWeight: 'bold', marginBottom: '16px' }}>
+                    อยู่ระหว่างการตรวจสอบ
+                  </h2>
+                  <p style={{ fontSize: '16px', color: '#7a6a3f', lineHeight: '1.6', marginBottom: '24px' }}>
+                    ข้อมูลของคุณได้รับเข้าสู่ระบบแล้ว แต่ยังไม่ได้รับการอนุมัติรหัสประจำตัว (UID) จากเจ้าหน้าที่ กรุณารอการตรวจสอบและอนุมัติ หรือติดต่อเจ้าหน้าที่หากมีข้อสงสัย
+                  </p>
+                  
+                  <div style={{ display: 'inline-block', backgroundColor: '#f8f4e8', padding: '15px 25px', borderRadius: '8px', border: '1px solid #e6d9b8', textAlign: 'left', marginBottom: '30px' }}>
+                     <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#5a4523' }}><strong>ชื่อที่ลงทะเบียน:</strong> {formData.name}</p>
+                     <p style={{ margin: '0', fontSize: '14px', color: '#5a4523' }}><strong>อีเมล:</strong> {formData.email}</p>
+                  </div>
+
+                  <div style={{ borderTop: '1px solid #e6d9b8', paddingTop: '20px', marginTop: '10px' }}>
+                    <p style={{ fontSize: '14px', color: '#555', marginBottom: '16px' }}>
+                      <strong>ติดต่อสอบถาม:</strong> 02-975-6999 ต่อ 1605
+                    </p>
+                    <button onClick={() => setStep('welcome')} style={{
+                      padding: '12px 30px', backgroundColor: '#a3812f', color: 'white', border: 'none',
+                      borderRadius: '8px', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer',
+                      boxShadow: '0 4px 6px rgba(163, 129, 47, 0.2)'
+                    }}>
+                      กลับสู่หน้าหลัก
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-navy-700 mb-1">ชื่อ-นามสกุล <span className="text-pink-500">*</span></label>
-                  <input type="text" required value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-navy-700 mb-1">เบอร์โทรติดต่อ <span className="text-pink-500">*</span></label>
-                    <input type="tel" required value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-navy-700 mb-1">อีเมล <span className="text-pink-500">*</span></label>
-                    <input type="email" required value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
-                  </div>
-                </div>
+            </motion.div>
+          )}
 
-                {formData.userType === 'alumni' && (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-navy-700 mb-1">ID Line <span className="text-pink-500">*</span></label>
-                        <input type="text" required value={formData.lineId || ''} onChange={(e) => setFormData({ ...formData, lineId: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-navy-700 mb-1">ชื่ออาจารย์ผู้แนะนำ <span className="text-pink-500">*</span></label>
-                        <input type="text" required value={formData.referringTeacher || ''} onChange={(e) => setFormData({ ...formData, referringTeacher: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-navy-700 mb-1">เลขที่ใบประกอบวิชาชีพ <span className="text-pink-500">*</span></label>
-                        <input type="text" required value={formData.licenseNumber || ''} onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-navy-700 mb-1">วันหมดอายุใบประกอบวิชาชีพ <span className="text-pink-500">*</span></label>
-                        <input type="date" required value={formData.licenseExpiry || ''} onChange={(e) => setFormData({ ...formData, licenseExpiry: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
-                      </div>
-                    </div>
-                  </>
-                )}
+          {step === 'edit_form' && (() => {
+            const uid = formData.uid || '';
+            const firstName = (formData.name || '').split(' ')[0];
+            const lineDisplayName = uid ? `${uid}-${firstName}` : '';
+            return (
+              <motion.div key="edit_form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
 
-                {formData.userType === 'general' && (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-navy-700 mb-1">ID Line <span className="text-pink-500">*</span></label>
-                        <input type="text" required value={formData.lineId || ''} onChange={(e) => setFormData({ ...formData, lineId: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
+                {/* ===== LINE OpenChat Invitation Card ===== */}
+                <div style={{ width: '100%', backgroundColor: '#f2ede0', borderRadius: '16px', padding: '20px 0' }}>
+                  {/* Header */}
+                  <div style={{
+                    maxWidth: '800px', margin: '0 auto', border: '2px solid #c9a24b',
+                    borderRadius: '12px', backgroundColor: '#fffdf7', overflow: 'hidden',
+                    fontFamily: "'Sarabun', 'Tahoma', sans-serif"
+                  }}>
+                    {/* Title Row */}
+                    <div style={{ textAlign: 'center', padding: '20px 20px 14px', borderBottom: '1px solid #e6d9b8' }}>
+                      <div style={{ fontSize: '11px', letterSpacing: '2px', color: '#a3812f', textTransform: 'uppercase', marginBottom: '4px' }}>
+                        You're Invited
                       </div>
-                      <div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-navy-700 mb-1">เลขที่ใบประกอบวิชาชีพ <span className="text-pink-500">*</span></label>
-                        <input type="text" required value={formData.licenseNumber || ''} onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-navy-700 mb-1">วันหมดอายุใบประกอบวิชาชีพ <span className="text-pink-500">*</span></label>
-                        <input type="date" required value={formData.licenseExpiry || ''} onChange={(e) => setFormData({ ...formData, licenseExpiry: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
+                      <div style={{ fontSize: '18px', color: '#5a4523', fontWeight: 'bold' }}>
+                        คำเชิญเข้าร่วมกลุ่ม LINE OpenChat ของโครงการ
                       </div>
                     </div>
+
+                    {/* Body: two-column on desktop, stacked on mobile */}
+                    <div className="line-invite-body" style={{ display: 'flex', flexWrap: 'wrap' }}>
+                      {/* Left col — QR + display name + button */}
+                      <div className="line-invite-col-img" style={{
+                        width: '50%', minWidth: '260px', flex: '1 1 260px',
+                        backgroundColor: '#f8f4e8', textAlign: 'center',
+                        padding: '24px 20px', boxSizing: 'border-box'
+                      }}>
+                        {/* UID Badge */}
+                        {uid && (
+                          <div style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '6px',
+                            backgroundColor: '#fff3cd', border: '1px solid #c9a24b',
+                            borderRadius: '20px', padding: '4px 14px', marginBottom: '12px',
+                            fontSize: '13px', color: '#7a6a3f'
+                          }}>
+                            <span style={{ fontWeight: 600, color: '#5a4523' }}>รหัสสมาชิก (UID):</span>
+                            <span style={{ fontWeight: 800, fontSize: '15px', color: '#a3812f', letterSpacing: '1px' }}>{uid}</span>
+                          </div>
+                        )}
+
+                        {/* Display-name instruction box */}
+                        <div style={{
+                          backgroundColor: '#fff6dd', border: '1px solid #e6d9b8', borderRadius: '8px',
+                          padding: '12px 14px', marginBottom: '16px', textAlign: 'center'
+                        }}>
+                          <div style={{ fontSize: '13px', color: '#5a4523', marginBottom: '6px' }}>
+                            📌 <strong>เมื่อเข้ากลุ่ม LINE แล้ว กรุณาตั้งชื่อในไลน์เป็น:</strong>
+                          </div>
+                          {lineDisplayName ? (
+                            <>
+                              <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#a3812f', margin: '4px 0' }}>
+                                {lineDisplayName}
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#7a6a3f' }}>
+                                (รหัสของท่าน-ชื่อ เช่น A001-สมหญิง)
+                              </div>
+                            </>
+                          ) : (
+                            <div style={{ fontSize: '13px', color: '#a0917a', fontStyle: 'italic' }}>
+                              ยังไม่ได้รับรหัส UID — กรุณาติดต่อเจ้าหน้าที่
+                            </div>
+                          )}
+                        </div>
+
+                        {/* QR Code */}
+                        <img
+                          src="/qr-line.png"
+                          alt="QR Code LINE OpenChat"
+                          style={{
+                            display: 'block', margin: '0 auto', width: '200px', maxWidth: '100%',
+                            height: 'auto', border: '5px solid #ffffff', outline: '1px solid #c9a24b', borderRadius: '4px'
+                          }}
+                        />
+                        <div style={{ fontSize: '13px', color: '#7a6a3f', marginTop: '10px' }}>
+                          สแกน QR Code เพื่อเข้าร่วมกลุ่ม LINE OpenChat
+                        </div>
+                        <a
+                          href="https://tinyurl.com/49em22cf"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          id="line-openchat-join-btn"
+                          style={{
+                            display: 'inline-block', marginTop: '14px', padding: '12px 28px',
+                            backgroundColor: '#06c755', color: '#ffffff', fontSize: '15px',
+                            fontWeight: 'bold', textDecoration: 'none', borderRadius: '8px',
+                            boxShadow: '0 3px 10px rgba(6,199,85,0.35)', letterSpacing: '0.3px'
+                          }}
+                        >
+                          🟢 คลิกเพื่อเข้าร่วมกลุ่ม LINE
+                        </a>
+                      </div>
+
+                      {/* Right col — letter body */}
+                      <div className="line-invite-col-info" style={{
+                        width: '50%', minWidth: '240px', flex: '1 1 240px',
+                        padding: '24px 22px', boxSizing: 'border-box',
+                        fontSize: '15px', lineHeight: '1.85', color: '#3a3a3a'
+                      }}>
+                        เรียน {formData.name || 'ท่านผู้เข้าร่วมอบรม'}<br /><br />
+                        คณะพยาบาลศาสตร์ มหาวิทยาลัยปทุมธานี ขอเรียนเชิญท่านเข้าร่วม{' '}
+                        <strong>กลุ่ม LINE OpenChat ของโครงการอบรมพยาบาลพี่เลี้ยงสู่คุณภาพด้านการเรียนการสอน ปีการศึกษา 2569</strong>{' '}
+                        เพื่อใช้เป็นช่องทางติดต่อสื่อสาร แจ้งข่าวสาร และแลกเปลี่ยนข้อมูลระหว่างการอบรม<br /><br />
+                        กรุณาสแกน QR Code หรือกดปุ่มด้านซ้าย เพื่อเข้าร่วมกลุ่ม<br /><br />
+                        เราหวังเป็นอย่างยิ่งว่า ท่านจะได้รับประโยชน์และสามารถนำความรู้ไปประยุกต์ใช้ในการปฏิบัติงานได้อย่างมีประสิทธิภาพต่อไป<br /><br />
+                        จึงเรียนมาเพื่อโปรดทราบและขอแสดงความนับถืออย่างสูง<br /><br />
+                        <span style={{ color: '#7a6a3f', fontSize: '13px' }}>
+                          สำนักงานคณบดีคณะพยาบาลศาสตร์ มหาวิทยาลัยปทุมธานี
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{
+                      padding: '14px 22px', borderTop: '1px solid #e6d9b8',
+                      fontSize: '13px', color: '#555'
+                    }}>
+                      <strong>การติดต่อสอบถามและแจ้งปัญหา:</strong>{' '}
+                      หากพบปัญหา กรุณาติดต่อ <strong>02-975-6999 ต่อ 1605</strong>
+                    </div>
+                  </div>
+                </div>
+                {/* ===== END LINE Card ===== */}
+
+                {/* ===== Edit Form ===== */}
+                <form id="edit-registration-form" onSubmit={handleEditSubmit} className="space-y-6">
+                  <div className="text-center mb-6">
+                    <h2 className="text-xl font-bold text-navy-700">แก้ไขข้อมูลผู้ลงทะเบียน</h2>
+                    <p className="text-slate-500 mt-1 text-sm">คุณสามารถปรับปรุงข้อมูลด้านล่างแล้วกดยืนยัน</p>
+                  </div>
+                  <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-navy-700 mb-2">อัปโหลดหลักฐานการชำระเงินใหม่ (ถ้าต้องการเปลี่ยน)</label>
-                      <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-navy-200 border-dashed rounded-xl bg-navy-50/30 hover:bg-navy-50 transition-colors">
-                        <div className="space-y-1 text-center">
-                          {!filePreview && <UploadCloud className="mx-auto h-12 w-12 text-navy-300" />}
-                          {filePreview && <div className="mb-4"><img src={filePreview} alt="Slip preview" className="mx-auto h-48 object-contain rounded-lg shadow-sm border border-slate-200" /></div>}
-                          <div className="flex text-sm text-slate-600 justify-center">
-                            <label htmlFor="file-upload-edit" className="relative cursor-pointer bg-white rounded-lg font-medium text-navy-600 hover:text-navy-800 px-4 py-1.5 shadow-sm border border-navy-200 transition-colors">
-                              <span>เปลี่ยนไฟล์ใหม่</span>
-                              <input id="file-upload-edit" type="file" accept="image/*,.pdf" className="sr-only" onChange={handleFileChange} />
-                            </label>
+                      <label className="block text-sm font-medium text-navy-700 mb-1">ชื่อ-นามสกุล <span className="text-pink-500">*</span></label>
+                      <input type="text" required value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-navy-700 mb-1">เบอร์โทรติดต่อ <span className="text-pink-500">*</span></label>
+                        <input type="tel" required value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-navy-700 mb-1">อีเมล <span className="text-pink-500">*</span></label>
+                        <input type="email" required value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
+                      </div>
+                    </div>
+
+                    {formData.userType === 'alumni' && (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-navy-700 mb-1">ID Line <span className="text-pink-500">*</span></label>
+                            <input type="text" required value={formData.lineId || ''} onChange={(e) => setFormData({ ...formData, lineId: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-navy-700 mb-1">ชื่ออาจารย์ผู้แนะนำ <span className="text-pink-500">*</span></label>
+                            <input type="text" required value={formData.referringTeacher || ''} onChange={(e) => setFormData({ ...formData, referringTeacher: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </>
-                )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-navy-700 mb-1">เลขที่ใบประกอบวิชาชีพ <span className="text-pink-500">*</span></label>
+                            <input type="text" required value={formData.licenseNumber || ''} onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-navy-700 mb-1">วันหมดอายุใบประกอบวิชาชีพ <span className="text-pink-500">*</span></label>
+                            <input type="date" required value={formData.licenseExpiry || ''} onChange={(e) => setFormData({ ...formData, licenseExpiry: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
+                          </div>
+                        </div>
+                      </>
+                    )}
 
-              </div>
-              <div className="pt-6 flex space-x-4">
-                <button type="button" onClick={() => setStep('welcome')} className="w-1/3 flex items-center justify-center py-3 px-4 border border-slate-200 rounded-xl shadow-sm text-base font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors">ยกเลิก</button>
-                <button type="submit" className="w-2/3 flex items-center justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-amber-500 hover:bg-amber-600 transition-colors">
-                  <CheckCircle2 className="mr-2 w-5 h-5" /> บันทึกการแก้ไข
-                </button>
-              </div>
-            </motion.form>
-          )}
+                    {formData.userType === 'general' && (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-navy-700 mb-1">ID Line <span className="text-pink-500">*</span></label>
+                            <input type="text" required value={formData.lineId || ''} onChange={(e) => setFormData({ ...formData, lineId: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
+                          </div>
+                          <div></div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-navy-700 mb-1">เลขที่ใบประกอบวิชาชีพ <span className="text-pink-500">*</span></label>
+                            <input type="text" required value={formData.licenseNumber || ''} onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-navy-700 mb-1">วันหมดอายุใบประกอบวิชาชีพ <span className="text-pink-500">*</span></label>
+                            <input type="date" required value={formData.licenseExpiry || ''} onChange={(e) => setFormData({ ...formData, licenseExpiry: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-navy-300 focus:border-navy-400 bg-slate-50/50" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-navy-700 mb-2">อัปโหลดหลักฐานการชำระเงินใหม่ (ถ้าต้องการเปลี่ยน)</label>
+                          <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-navy-200 border-dashed rounded-xl bg-navy-50/30 hover:bg-navy-50 transition-colors">
+                            <div className="space-y-1 text-center">
+                              {!filePreview && <UploadCloud className="mx-auto h-12 w-12 text-navy-300" />}
+                              {filePreview && <div className="mb-4"><img src={filePreview} alt="Slip preview" className="mx-auto h-48 object-contain rounded-lg shadow-sm border border-slate-200" /></div>}
+                              <div className="flex text-sm text-slate-600 justify-center">
+                                <label htmlFor="file-upload-edit" className="relative cursor-pointer bg-white rounded-lg font-medium text-navy-600 hover:text-navy-800 px-4 py-1.5 shadow-sm border border-navy-200 transition-colors">
+                                  <span>เปลี่ยนไฟล์ใหม่</span>
+                                  <input id="file-upload-edit" type="file" accept="image/*,.pdf" className="sr-only" onChange={handleFileChange} />
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="pt-6 flex space-x-4">
+                    <button type="button" onClick={() => setStep('welcome')} className="w-1/3 flex items-center justify-center py-3 px-4 border border-slate-200 rounded-xl shadow-sm text-base font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors">ยกเลิก</button>
+                    <button type="submit" className="w-2/3 flex items-center justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-amber-500 hover:bg-amber-600 transition-colors">
+                      <CheckCircle2 className="mr-2 w-5 h-5" /> บันทึกการแก้ไข
+                    </button>
+                  </div>
+                </form>
+                {/* ===== END Edit Form ===== */}
+
+              </motion.div>
+            );
+          })()}
+
 
           {step === 'review' && (
             <motion.div key="review" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
