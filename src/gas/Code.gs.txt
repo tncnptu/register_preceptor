@@ -86,21 +86,29 @@ function submitRegistration(formData) {
     if (!sheet) throw new Error("ไม่พบ Sheet ที่ชื่อ " + CONFIG.SHEET_NAME);
     
     let slipUrl = "";
-    if (formData.userType === 'general' && formData.slipFile && formData.slipFile.data) {
-      if (!isValidMimeType(formData.slipFile.mimeType)) {
-        throw new Error("ชนิดไฟล์อัปโหลดไม่ถูกต้อง กรุณาอัปโหลดรูปภาพหรือ PDF เท่านั้น");
+    let uploadError = "";
+    if ((formData.userType === 'general' || formData.userType === 'alumni_new') && formData.slipFile && formData.slipFile.data) {
+      try {
+        if (!isValidMimeType(formData.slipFile.mimeType)) {
+          throw new Error("ชนิดไฟล์อัปโหลดไม่ถูกต้อง กรุณาอัปโหลดรูปภาพหรือ PDF เท่านั้น");
+        }
+        const folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
+        const blob = Utilities.newBlob(
+          Utilities.base64Decode(formData.slipFile.data), 
+          formData.slipFile.mimeType, 
+          formData.slipFile.filename
+        );
+        const newFileName = `Slip_${sanitizeInput(formData.name)}_${new Date().getTime()}`;
+        blob.setName(newFileName);
+        const file = folder.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        slipUrl = file.getUrl();
+      } catch (uploadEx) {
+        uploadError = uploadEx.toString();
+        // สามารถเลือก throw ต่อเพื่อให้บันทึกข้อมูลไม่สำเร็จ หรือแค่เก็บ error ไว้
+        // ในที่นี้จะ throw เพื่อให้รู้ว่าเกิด error อะไรขึ้นชัดเจน
+        throw new Error("เกิดข้อผิดพลาดในการอัปโหลดสลิป: " + uploadError);
       }
-      const folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
-      const blob = Utilities.newBlob(
-        Utilities.base64Decode(formData.slipFile.data), 
-        formData.slipFile.mimeType, 
-        formData.slipFile.filename
-      );
-      const newFileName = `Slip_${sanitizeInput(formData.name)}_${new Date().getTime()}`;
-      blob.setName(newFileName);
-      const file = folder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      slipUrl = file.getUrl();
     }
     
     if (formData.userType === 'general') {
@@ -115,6 +123,9 @@ function submitRegistration(formData) {
     }
     const timestamp = new Date();
     
+    const nextRow = sheet.getLastRow() + 1;
+    const uidFormula = `=SWITCH(F${nextRow}, 0, "A", 700, "B", 1000, "C", "Unknown") & TEXT(ROW() - 1, "000")`;
+    
     let emailStatus = "Pending";
     const row = [
       timestamp,
@@ -128,7 +139,9 @@ function submitRegistration(formData) {
       sanitizeInput(formData.referringTeacher || ''),
       formData.lineId ? "'" + sanitizeInput(formData.lineId) : '',
       formData.licenseNumber ? "'" + sanitizeInput(formData.licenseNumber) : '',
-      formData.licenseExpiry || ''
+      formData.licenseExpiry || '',
+      '', // Column M
+      uidFormula // Column N (UID)
     ];
     
     sheet.appendRow(row);
@@ -180,7 +193,7 @@ function searchRegistration(email, phone) {
             lineId: String(data[i][9]).replace(/^'/, ''),
             licenseNumber: String(data[i][10]).replace(/^'/, ''),
             licenseExpiry: data[i][11],
-            uid: String(data[i][13]).replace(/^'/, '') // Column N — user UID
+            uid: String(data[i][13] || '').replace(/^'/, '') // Column N — user UID (14th column)
           }
         };
       }
@@ -278,20 +291,24 @@ function updateRegistration(id, updateData) {
     if (updateData.licenseExpiry) sheet.getRange(rowIndex, 12).setValue(updateData.licenseExpiry);
     
     if ((updateData.userType === 'general' || updateData.userType === 'alumni_new') && updateData.slipFile && updateData.slipFile.data) {
-      if (!isValidMimeType(updateData.slipFile.mimeType)) {
-        throw new Error("ชนิดไฟล์อัปโหลดไม่ถูกต้อง กรุณาอัปโหลดรูปภาพหรือ PDF เท่านั้น");
+      try {
+        if (!isValidMimeType(updateData.slipFile.mimeType)) {
+          throw new Error("ชนิดไฟล์อัปโหลดไม่ถูกต้อง กรุณาอัปโหลดรูปภาพหรือ PDF เท่านั้น");
+        }
+        const folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
+        const blob = Utilities.newBlob(
+          Utilities.base64Decode(updateData.slipFile.data), 
+          updateData.slipFile.mimeType, 
+          updateData.slipFile.filename
+        );
+        const newFileName = `Slip_${sanitizeInput(updateData.name || 'Update')}_${new Date().getTime()}`;
+        blob.setName(newFileName);
+        const file = folder.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        sheet.getRange(rowIndex, 7).setValue(file.getUrl());
+      } catch (uploadEx) {
+        throw new Error("เกิดข้อผิดพลาดในการอัปโหลดสลิป: " + uploadEx.toString());
       }
-      const folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
-      const blob = Utilities.newBlob(
-        Utilities.base64Decode(updateData.slipFile.data), 
-        updateData.slipFile.mimeType, 
-        updateData.slipFile.filename
-      );
-      const newFileName = `Slip_${sanitizeInput(updateData.name || 'Update')}_${new Date().getTime()}`;
-      blob.setName(newFileName);
-      const file = folder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      sheet.getRange(rowIndex, 7).setValue(file.getUrl());
     }
 
     return { success: true, message: "อัปเดตข้อมูลสำเร็จ" };

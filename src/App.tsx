@@ -369,7 +369,33 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
 
       const result = await response.json();
       if (result.success) {
-        setStep('success');
+        try {
+          const searchResponse = await fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: formData.email, phone: formData.phone })
+          });
+          const searchResult = await searchResponse.json();
+
+          if (searchResult.success) {
+            setFormData(searchResult.data);
+            if (searchResult.data.slipUrl) {
+              setFilePreview(searchResult.data.slipUrl);
+            }
+            setEditEmail(formData.email);
+            setEditPhone(formData.phone);
+
+            const hasUid = searchResult.data.uid && String(searchResult.data.uid).trim() !== '';
+            setStep(hasUid ? 'edit_form' : 'pending_approval');
+          } else {
+            alert('ลงทะเบียนสำเร็จ แต่ไม่สามารถโหลดข้อมูลล่าสุดได้: ' + searchResult.message);
+            setStep('success');
+          }
+        } catch (searchError) {
+          console.error(searchError);
+          alert('ลงทะเบียนสำเร็จ แต่เกิดข้อผิดพลาดในการเชื่อมต่อเพื่อดึงข้อมูล');
+          setStep('success');
+        }
       } else {
         alert('เกิดข้อผิดพลาด: ' + result.message);
         setStep('review');
@@ -893,10 +919,10 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
                   <p style={{ fontSize: '16px', color: '#7a6a3f', lineHeight: '1.6', marginBottom: '24px' }}>
                     ข้อมูลของคุณได้รับเข้าสู่ระบบแล้ว แต่ยังไม่ได้รับการอนุมัติรหัสประจำตัว (UID) จากเจ้าหน้าที่ กรุณารอการตรวจสอบและอนุมัติ หรือติดต่อเจ้าหน้าที่หากมีข้อสงสัย
                   </p>
-                  
+
                   <div style={{ display: 'inline-block', backgroundColor: '#f8f4e8', padding: '15px 25px', borderRadius: '8px', border: '1px solid #e6d9b8', textAlign: 'left', marginBottom: '30px' }}>
-                     <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#5a4523' }}><strong>ชื่อที่ลงทะเบียน:</strong> {formData.name}</p>
-                     <p style={{ margin: '0', fontSize: '14px', color: '#5a4523' }}><strong>อีเมล:</strong> {formData.email}</p>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#5a4523' }}><strong>ชื่อที่ลงทะเบียน:</strong> {formData.name}</p>
+                    <p style={{ margin: '0', fontSize: '14px', color: '#5a4523' }}><strong>อีเมล:</strong> {formData.email}</p>
                   </div>
 
                   <div style={{ borderTop: '1px solid #e6d9b8', paddingTop: '20px', marginTop: '10px' }}>
@@ -918,7 +944,7 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
 
           {step === 'edit_form' && (() => {
             const uid = formData.uid || '';
-            const firstName = (formData.name || '').split(' ')[0];
+            const firstName = (formData.name || '');
             const lineDisplayName = uid ? `${uid}-${firstName}` : '';
             return (
               <motion.div key="edit_form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
