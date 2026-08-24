@@ -111,6 +111,7 @@ type FlowStep = 'welcome' | 'edit_login' | 'edit_form' | 'pending_approval' | 's
 
 function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabChange: (tab: Tab) => void }) {
   const [step, setStep] = useState<FlowStep>('welcome');
+  const [showEndPopup, setShowEndPopup] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'home') {
@@ -490,7 +491,16 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
 
               {/* Action Buttons */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl mx-auto pt-2">
+                {/*
                 <button onClick={() => { onTabChange('form'); setStep('select_type'); }} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-navy-200 bg-gradient-to-br from-navy-50 to-white hover:border-navy-400 transition-all shadow-sm focus:outline-none group">
+                  <div className="w-14 h-14 bg-navy-100 text-navy-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <FileText className="w-7 h-7" />
+                  </div>
+                  <span className="text-lg font-bold text-navy-700">ลงทะเบียนอบรมฯ</span>
+                  <span className="text-xs text-slate-500 mt-1">สำหรับผู้สมัครใหม่</span>
+                </button>
+                */}
+                <button onClick={() => setShowEndPopup(true)} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-navy-200 bg-gradient-to-br from-navy-50 to-white hover:border-navy-400 transition-all shadow-sm focus:outline-none group">
                   <div className="w-14 h-14 bg-navy-100 text-navy-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <FileText className="w-7 h-7" />
                   </div>
@@ -1264,6 +1274,28 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
           )}
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {showEndPopup && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative text-center">
+              <div className="w-16 h-16 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8" />
+              </div>
+              <h3 className="text-2xl font-bold text-navy-800 mb-2">สิ้นสุดเวลาลงทะเบียน</h3>
+              <p className="text-slate-600 mb-6">
+                พบกันใหม่ในครั้งถัดไป โปรดติดตามข่าวสารผ่านเพจคณะฯ<br />
+                <a href="https://www.facebook.com/NursingofPTU" target="_blank" rel="noopener noreferrer" className="text-pink-600 font-semibold hover:underline">
+                  facebook
+                </a>
+              </p>
+              <button onClick={() => setShowEndPopup(false)} className="w-full py-3 px-4 bg-navy-600 hover:bg-navy-700 text-white rounded-xl font-medium transition-colors">
+                ปิด
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
