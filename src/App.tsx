@@ -11,6 +11,7 @@ type Tab = 'home' | 'form' | 'dashboard' | 'schedule';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [showEndPopup, setShowEndPopup] = useState(false);
 
   return (
     <div className="min-h-screen font-sans text-slate-800">
@@ -28,7 +29,7 @@ export default function App() {
 
             <div className="flex space-x-1 sm:space-x-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
               <NavButton active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home className="w-4 h-4 mr-1.5" />} label="หน้าแรก" />
-              <NavButton active={activeTab === 'form'} onClick={() => setActiveTab('form')} icon={<FileText className="w-4 h-4 mr-1.5" />} label="ลงทะเบียน" />
+              <NavButton active={activeTab === 'form'} onClick={() => setShowEndPopup(true)} icon={<FileText className="w-4 h-4 mr-1.5" />} label="ลงทะเบียน" />
               <NavButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar className="w-4 h-4 mr-1.5" />} label="กำหนดการ" />
               <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-4 h-4 mr-1.5" />} label="แดชบอร์ด" />
             </div>
@@ -40,7 +41,7 @@ export default function App() {
         <AnimatePresence mode="wait">
           {(activeTab === 'home' || activeTab === 'form') && (
             <motion.div key="flow" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
-              <RegistrationFlow activeTab={activeTab} onTabChange={setActiveTab} />
+              <RegistrationFlow activeTab={activeTab} onTabChange={setActiveTab} onShowEndPopup={() => setShowEndPopup(true)} />
             </motion.div>
           )}
           {activeTab === 'dashboard' && (
@@ -88,6 +89,28 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      <AnimatePresence>
+        {showEndPopup && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative text-center">
+              <div className="w-16 h-16 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8" />
+              </div>
+              <h3 className="text-2xl font-bold text-navy-800 mb-2">สิ้นสุดเวลาลงทะเบียน</h3>
+              <p className="text-slate-600 mb-6">
+                พบกันใหม่ในครั้งถัดไป โปรดติดตามข่าวสารผ่านเพจคณะฯ<br />
+                <a href="https://www.facebook.com/NursingofPTU" target="_blank" rel="noopener noreferrer" className="text-pink-600 font-semibold hover:underline">
+                  facebook
+                </a>
+              </p>
+              <button onClick={() => setShowEndPopup(false)} className="w-full py-3 px-4 bg-navy-600 hover:bg-navy-700 text-white rounded-xl font-medium transition-colors">
+                ปิด
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -109,9 +132,8 @@ function NavButton({ active, onClick, icon, label }: { active: boolean; onClick:
 
 type FlowStep = 'welcome' | 'edit_login' | 'edit_form' | 'pending_approval' | 'select_type' | 'secret_check' | 'alumni_verify' | 'form_general' | 'form_alumni' | 'form_alumni_new' | 'review' | 'submitting' | 'success';
 
-function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabChange: (tab: Tab) => void }) {
+function RegistrationFlow({ activeTab, onTabChange, onShowEndPopup }: { activeTab: Tab, onTabChange: (tab: Tab) => void, onShowEndPopup: () => void }) {
   const [step, setStep] = useState<FlowStep>('welcome');
-  const [showEndPopup, setShowEndPopup] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'home') {
@@ -500,7 +522,7 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
                   <span className="text-xs text-slate-500 mt-1">สำหรับผู้สมัครใหม่</span>
                 </button>
                 */}
-                <button onClick={() => setShowEndPopup(true)} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-navy-200 bg-gradient-to-br from-navy-50 to-white hover:border-navy-400 transition-all shadow-sm focus:outline-none group">
+                <button onClick={onShowEndPopup} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-navy-200 bg-gradient-to-br from-navy-50 to-white hover:border-navy-400 transition-all shadow-sm focus:outline-none group">
                   <div className="w-14 h-14 bg-navy-100 text-navy-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <FileText className="w-7 h-7" />
                   </div>
@@ -1274,28 +1296,6 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
           )}
         </AnimatePresence>
       </div>
-
-      <AnimatePresence>
-        {showEndPopup && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative text-center">
-              <div className="w-16 h-16 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="w-8 h-8" />
-              </div>
-              <h3 className="text-2xl font-bold text-navy-800 mb-2">สิ้นสุดเวลาลงทะเบียน</h3>
-              <p className="text-slate-600 mb-6">
-                พบกันใหม่ในครั้งถัดไป โปรดติดตามข่าวสารผ่านเพจคณะฯ<br />
-                <a href="https://www.facebook.com/NursingofPTU" target="_blank" rel="noopener noreferrer" className="text-pink-600 font-semibold hover:underline">
-                  facebook
-                </a>
-              </p>
-              <button onClick={() => setShowEndPopup(false)} className="w-full py-3 px-4 bg-navy-600 hover:bg-navy-700 text-white rounded-xl font-medium transition-colors">
-                ปิด
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
