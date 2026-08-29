@@ -106,6 +106,10 @@ async function startServer() {
   });
 
   app.post('/api/register', async (req, res) => {
+    if (process.env.VITE_ALLOW_REGISTRATION !== 'true') {
+      return res.status(403).json({ success: false, message: 'ระบบปิดรับสมัครแล้ว' });
+    }
+    
     try {
       const formData = req.body;
       

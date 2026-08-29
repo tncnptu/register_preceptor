@@ -29,6 +29,7 @@ export interface RegistrationRecord {
   lineId?: string;
   licenseNumber?: string;
   licenseExpiry?: string;
+  receiptUrl?: string;
 }
 
 export const PRICING = {

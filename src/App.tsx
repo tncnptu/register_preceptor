@@ -3,11 +3,13 @@ import { PRICING, RegistrationFormData } from './types';
 import {
   Users, CreditCard, CheckCircle2, FileText, LayoutDashboard, Code,
   AlertCircle, RefreshCw, UploadCloud, ArrowRight, ArrowLeft, Copy,
-  Phone, Mail, MapPin, GraduationCap, Heart, Calendar, Clock, Award, Home, LogOut
+  Phone, Mail, MapPin, GraduationCap, Heart, Calendar, Clock, Award, Home, LogOut, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Schedule from './Schedule';
 type Tab = 'home' | 'form' | 'dashboard' | 'schedule';
+
+const IS_REGISTRATION_OPEN = import.meta.env.VITE_ALLOW_REGISTRATION === 'true';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
@@ -28,7 +30,13 @@ export default function App() {
 
             <div className="flex space-x-1 sm:space-x-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
               <NavButton active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home className="w-4 h-4 mr-1.5" />} label="หน้าแรก" />
-              <NavButton active={activeTab === 'form'} onClick={() => setActiveTab('form')} icon={<FileText className="w-4 h-4 mr-1.5" />} label="ลงทะเบียน" />
+              <NavButton active={activeTab === 'form'} onClick={() => {
+                if (IS_REGISTRATION_OPEN) {
+                  setActiveTab('form');
+                } else {
+                  alert('ขณะนี้ระบบได้ปิดรับสมัครแล้ว ขออภัยในความไม่สะดวกครับ');
+                }
+              }} icon={<FileText className="w-4 h-4 mr-1.5" />} label="ลงทะเบียน" />
               <NavButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar className="w-4 h-4 mr-1.5" />} label="กำหนดการ" />
               <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-4 h-4 mr-1.5" />} label="แดชบอร์ด" />
             </div>
@@ -430,8 +438,8 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
 
               {/* Badge */}
               <div className="flex justify-center -mt-4">
-                <span className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-md animate-pulse-soft">
-                  <Heart className="w-4 h-4 mr-1.5" /> เปิดรับสมัครแล้ววันนี้
+                <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold shadow-md ${IS_REGISTRATION_OPEN ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white animate-pulse-soft' : 'bg-slate-200 text-slate-500'}`}>
+                  {IS_REGISTRATION_OPEN ? <><Heart className="w-4 h-4 mr-1.5" /> เปิดรับสมัครแล้ววันนี้</> : <><AlertCircle className="w-4 h-4 mr-1.5" /> ปิดรับสมัครแล้ว</>}
                 </span>
               </div>
 
@@ -462,12 +470,18 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
 
               {/* Action Buttons */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl mx-auto pt-2">
-                <button onClick={() => { onTabChange('form'); setStep('select_type'); }} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-navy-200 bg-gradient-to-br from-navy-50 to-white hover:border-navy-400 transition-all shadow-sm focus:outline-none group">
-                  <div className="w-14 h-14 bg-navy-100 text-navy-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <button onClick={() => { 
+                  if (IS_REGISTRATION_OPEN) { 
+                    onTabChange('form'); setStep('select_type'); 
+                  } else {
+                    alert('ขณะนี้ระบบได้ปิดรับสมัครแล้ว ขออภัยในความไม่สะดวกครับ');
+                  }
+                }} className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all shadow-sm focus:outline-none group ${IS_REGISTRATION_OPEN ? 'card-hover border-navy-200 bg-gradient-to-br from-navy-50 to-white hover:border-navy-400' : 'border-slate-200 bg-slate-50'}`}>
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 transition-transform ${IS_REGISTRATION_OPEN ? 'bg-navy-100 text-navy-600 group-hover:scale-110' : 'bg-slate-200 text-slate-500'}`}>
                     <FileText className="w-7 h-7" />
                   </div>
-                  <span className="text-lg font-bold text-navy-700">ลงทะเบียนอบรมฯ</span>
-                  <span className="text-xs text-slate-500 mt-1">สำหรับผู้สมัครใหม่</span>
+                  <span className={`text-lg font-bold ${IS_REGISTRATION_OPEN ? 'text-navy-700' : 'text-slate-500'}`}>ลงทะเบียนอบรมฯ</span>
+                  <span className="text-xs text-slate-500 mt-1">{IS_REGISTRATION_OPEN ? 'สำหรับผู้สมัครใหม่' : 'ปิดระบบชั่วคราว'}</span>
                 </button>
                 <button onClick={() => { onTabChange('form'); setStep('edit_login'); }} className="card-hover flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-white hover:border-amber-400 transition-all shadow-sm focus:outline-none group">
                   <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -877,6 +891,14 @@ function RegistrationFlow({ activeTab, onTabChange }: { activeTab: Tab, onTabCha
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold text-navy-700">แก้ไขข้อมูลการลงทะเบียน</h2>
                 <p className="text-slate-500 mt-2">คุณสามารถปรับปรุงข้อมูลด้านล่างแล้วกดยืนยัน</p>
+                {formData.receiptUrl && (
+                  <div className="mt-4 flex justify-center">
+                    <a href={formData.receiptUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 rounded-xl text-sm font-medium transition-colors border border-emerald-200 shadow-sm">
+                      <Download className="w-4 h-4 mr-2" />
+                      ดาวน์โหลดใบเสร็จรับเงิน
+                    </a>
+                  </div>
+                )}
               </div>
               <div className="space-y-4">
                 <div>
