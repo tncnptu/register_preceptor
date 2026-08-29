@@ -57,8 +57,8 @@ async function startServer() {
   app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     
-    const adminUser = process.env.ADMIN_USERNAME || 'admin';
-    const adminPass = process.env.ADMIN_PASSWORD || 'admin';
+    const adminUser = process.env.ADMIN_USERNAME ;
+    const adminPass = process.env.ADMIN_PASSWORD ;
 
     if (
       username === adminUser && 
@@ -106,10 +106,6 @@ async function startServer() {
   });
 
   app.post('/api/register', async (req, res) => {
-    if (process.env.VITE_ALLOW_REGISTRATION !== 'true') {
-      return res.status(403).json({ success: false, message: 'ระบบปิดรับสมัครแล้ว' });
-    }
-    
     try {
       const formData = req.body;
       
