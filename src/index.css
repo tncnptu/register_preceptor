@@ -118,3 +118,12 @@ input:focus, select:focus, textarea:focus {
   background: linear-gradient(135deg, #be185d 0%, #db2777 100%);
   box-shadow: 0 4px 15px -3px rgba(219, 39, 119, 0.4);
 }
+
+/* LINE Invitation Card — responsive columns */
+@media (max-width: 620px) {
+  .line-invite-col-img,
+  .line-invite-col-info {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
