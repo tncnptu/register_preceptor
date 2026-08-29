@@ -34,7 +34,7 @@ export default function App() {
                 if (IS_REGISTRATION_OPEN) {
                   setActiveTab('form');
                 } else {
-                  alert('ขณะนี้ระบบได้ปิดรับสมัครแล้ว ขออภัยในความไม่สะดวกครับ');
+                  alert('ขณะนี้ระบบได้ปิดรับสมัครแล้ว');
                 }
               }} icon={<FileText className="w-4 h-4 mr-1.5" />} label="ลงทะเบียน" />
               <NavButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar className="w-4 h-4 mr-1.5" />} label="กำหนดการ" />
