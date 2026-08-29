@@ -3,7 +3,7 @@ import { PRICING, RegistrationFormData } from './types';
 import {
   Users, CreditCard, CheckCircle2, FileText, LayoutDashboard, Code,
   AlertCircle, RefreshCw, UploadCloud, ArrowRight, ArrowLeft, Copy,
-  Phone, Mail, MapPin, GraduationCap, Heart, Calendar, Clock, Award, Home, LogOut, Search
+  Phone, Mail, MapPin, GraduationCap, Heart, Calendar, Clock, Award, Home, LogOut, Search, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Schedule from './Schedule';
@@ -980,6 +980,16 @@ function RegistrationFlow({ activeTab, onTabChange, onShowEndPopup }: { activeTa
             const lineDisplayName = uid ? `${uid}-${firstName}` : '';
             return (
               <motion.div key="edit_form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+
+                {/* ===== Receipt Download Section ===== */}
+                {formData.receiptUrl && (
+                  <div className="flex justify-center mt-2">
+                    <a href={formData.receiptUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-6 py-3 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 rounded-xl text-base font-semibold transition-colors border border-emerald-200 shadow-sm">
+                      <Download className="w-5 h-5 mr-2" />
+                      ดาวน์โหลดใบเสร็จรับเงิน
+                    </a>
+                  </div>
+                )}
 
                 {/* ===== LINE OpenChat Invitation Card ===== */}
                 <div style={{ width: '100%', backgroundColor: '#f2ede0', borderRadius: '16px', padding: '20px 0' }}>
