@@ -957,6 +957,24 @@ function RegistrationFlow({ activeTab, onTabChange, onShowEndPopup }: { activeTa
                     <p style={{ margin: '0', fontSize: '14px', color: '#5a4523' }}><strong>อีเมล:</strong> {formData.email}</p>
                   </div>
 
+                  {/* ===== Receipt & Certificate Download Section (Pending Approval) ===== */}
+                  {(formData.receiptUrl || formData.certificateUrl) && (
+                    <div className="flex flex-wrap justify-center gap-3 mb-6">
+                      {formData.receiptUrl && (
+                        <a href={formData.receiptUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-6 py-3 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 rounded-xl text-base font-semibold transition-colors border border-emerald-200 shadow-sm">
+                          <Download className="w-5 h-5 mr-2" />
+                          ดาวน์โหลดใบเสร็จรับเงิน
+                        </a>
+                      )}
+                      {formData.certificateUrl && (
+                        <a href={formData.certificateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-6 py-3 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 rounded-xl text-base font-semibold transition-colors border border-amber-200 shadow-sm">
+                          <Award className="w-5 h-5 mr-2" />
+                          ดาวน์โหลดใบประกาศนียบัตร
+                        </a>
+                      )}
+                    </div>
+                  )}
+
                   <div style={{ borderTop: '1px solid #e6d9b8', paddingTop: '20px', marginTop: '10px' }}>
                     <p style={{ fontSize: '14px', color: '#555', marginBottom: '16px' }}>
                       <strong>ติดต่อสอบถาม:</strong> 02-975-6999 ต่อ 1605
@@ -981,13 +999,21 @@ function RegistrationFlow({ activeTab, onTabChange, onShowEndPopup }: { activeTa
             return (
               <motion.div key="edit_form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
 
-                {/* ===== Receipt Download Section ===== */}
-                {formData.receiptUrl && (
-                  <div className="flex justify-center mt-2">
-                    <a href={formData.receiptUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-6 py-3 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 rounded-xl text-base font-semibold transition-colors border border-emerald-200 shadow-sm">
-                      <Download className="w-5 h-5 mr-2" />
-                      ดาวน์โหลดใบเสร็จรับเงิน
-                    </a>
+                {/* ===== Receipt & Certificate Download Section ===== */}
+                {(formData.receiptUrl || formData.certificateUrl) && (
+                  <div className="flex flex-wrap justify-center gap-3 mt-2">
+                    {formData.receiptUrl && (
+                      <a href={formData.receiptUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-6 py-3 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 rounded-xl text-base font-semibold transition-colors border border-emerald-200 shadow-sm">
+                        <Download className="w-5 h-5 mr-2" />
+                        ดาวน์โหลดใบเสร็จรับเงิน
+                      </a>
+                    )}
+                    {formData.certificateUrl && (
+                      <a href={formData.certificateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-6 py-3 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 rounded-xl text-base font-semibold transition-colors border border-amber-200 shadow-sm">
+                        <Award className="w-5 h-5 mr-2" />
+                        ดาวน์โหลดใบประกาศนียบัตร
+                      </a>
+                    )}
                   </div>
                 )}
 
