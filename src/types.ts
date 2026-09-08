@@ -14,6 +14,8 @@ export interface RegistrationFormData {
   originalName?: string;
   newName?: string;
   uid?: string; // Column N — assigned UID from sheet
+  receiptUrl?: string; // Column U
+  certificateUrl?: string; // Column X
 }
 
 export interface RegistrationRecord {
@@ -30,6 +32,8 @@ export interface RegistrationRecord {
   lineId?: string;
   licenseNumber?: string;
   licenseExpiry?: string;
+  receiptUrl?: string;
+  certificateUrl?: string;
 }
 
 export const PRICING = {

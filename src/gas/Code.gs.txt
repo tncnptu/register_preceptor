@@ -194,7 +194,8 @@ function searchRegistration(email, phone) {
             licenseNumber: String(data[i][10]).replace(/^'/, ''),
             licenseExpiry: data[i][11],
             uid: String(data[i][13] || '').replace(/^'/, ''), // Column N — user UID (14th column)
-            receiptUrl: data[i][20] || '' // Column U
+            receiptUrl: data[i][20] || '', // Column U
+            certificateUrl: data[i][23] || '' // Column X
           }
         };
       }
